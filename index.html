@@ -972,17 +972,18 @@ function haversine(a,b){ const R=6371,toR=x=>x*Math.PI/180;
   const dLat=toR(b.lat-a.lat),dLon=toR(b.lon-a.lon);
   const s=Math.sin(dLat/2)**2+Math.cos(toR(a.lat))*Math.cos(toR(b.lat))*Math.sin(dLon/2)**2;
   return 2*R*Math.asin(Math.sqrt(s)); }
+function inBR(lat,lon){ return isFinite(lat)&&isFinite(lon)&&lat>=-34&&lat<=6&&lon>=-74&&lon<=-32; }
 async function geocodeCep(cep){
   const c=onlyDigits(cep); if(c.length!==8) return null;
   // 1) AwesomeAPI
   try{ const r=await fetch('https://cep.awesomeapi.com.br/json/'+c);
     if(r.ok){ const j=await r.json(); const lat=parseFloat(j.lat),lon=parseFloat(j.lng);
-      if(isFinite(lat)&&isFinite(lon)) return {lat,lon}; } }catch(e){}
+      if(inBR(lat,lon)) return {lat,lon}; } }catch(e){}
   // 2) BrasilAPI v2
   try{ const r=await fetch('https://brasilapi.com.br/api/cep/v2/'+c);
     if(r.ok){ const j=await r.json(); const co=j.location&&j.location.coordinates;
       if(co&&co.latitude){ const lat=parseFloat(co.latitude),lon=parseFloat(co.longitude);
-        if(isFinite(lat)&&isFinite(lon)) return {lat,lon}; } } }catch(e){}
+        if(inBR(lat,lon)) return {lat,lon}; } } }catch(e){}
   return null;
 }
 function nearestOrder(origin,stops){ // vizinho mais próximo a partir da origem
@@ -1009,15 +1010,11 @@ async function calcularKmAuto(){
     // origem
     const origin=await geocodeCep(document.getElementById('kCepOrigem').value);
     if(!origin) throw new Error('não consegui localizar o CEP de partida');
-    // paradas únicas: usa lat/lon da planilha quando houver, senão geocodifica o CEP
+    // paradas únicas por CEP — geocodifica sempre pelo CEP (a Lat/Lon da planilha é ignorada por vir incorreta)
     const seen={}, uniq=[];
-    GRID.rows.forEach(d=>{ const key=onlyDigits(d.cep)|| (d.cidade||''); if(!key||seen[key])return; seen[key]=1;
-      uniq.push({cep:d.cep, lat:scaleCoord(d.lat), lon:scaleCoord(d.lon)}); });
+    GRID.rows.forEach(d=>{ const key=onlyDigits(d.cep); if(!key||seen[key])return; seen[key]=1; uniq.push(d.cep); });
     let geoFail=0; const stops=[];
-    for(const u of uniq){
-      let pt = (u.lat&&u.lon)? {lat:u.lat,lon:u.lon} : await geocodeCep(u.cep);
-      if(pt) stops.push(pt); else geoFail++;
-    }
+    for(const cep of uniq){ const pt=await geocodeCep(cep); if(pt) stops.push(pt); else geoFail++; }
     if(!stops.length) throw new Error('nenhum CEP de destino pôde ser localizado');
     const ordered=nearestOrder(origin,stops);
     const path=[origin,...ordered,origin];
