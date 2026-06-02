@@ -2,7 +2,10 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0f2747">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Infinity Log · Calculadora de Frete</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -188,6 +191,138 @@ tfoot .grand{color:var(--blue-d);font-size:1.02rem}
 .empty .big{font-family:'Sora';font-weight:600;color:var(--muted);font-size:.95rem}
 .empty .small{font-size:.82rem;margin-top:5px}
 
+
+/* ===== ABAS ===== */
+.tabbar{display:flex;gap:8px;margin:26px 0 4px;border-bottom:2px solid var(--line)}
+.tab{background:none;border:none;border-bottom:3px solid transparent;margin-bottom:-2px;padding:13px 20px;font-family:'Sora';font-weight:700;font-size:.95rem;color:var(--muted);cursor:pointer;display:flex;align-items:center;gap:8px;transition:.15s;border-radius:8px 8px 0 0}
+.tab .ti{font-size:1.05rem}
+.tab:hover{color:var(--navy2);background:var(--surface2)}
+.tab.active{color:var(--blue-d);border-bottom-color:var(--blue)}
+.tabpane{display:none}
+.tabpane.active{display:block;animation:fade .3s}
+.cardwrap-single{max-width:480px}
+.kpis4{grid-template-columns:repeat(4,1fr)}
+@media(max-width:780px){.kpis4{grid-template-columns:repeat(2,1fr)}}
+/* custo layout */
+.custo-cols{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px;align-items:start}
+@media(max-width:1000px){.custo-cols{grid-template-columns:1fr}}
+.kmnote{font-size:.74rem;color:var(--amber);background:var(--amber-bg);border:1px solid #f0dcae;border-radius:8px;padding:8px 11px;margin-top:9px;line-height:1.45}
+.kmnote.blue{color:var(--blue-d);background:var(--blue-tint);border-color:#cfe2f7}
+.kmnote b{color:inherit}
+.kmtable{display:flex;flex-direction:column;gap:8px;margin-top:4px}
+.kmrow{display:grid;grid-template-columns:1fr 84px 92px;gap:8px;align-items:center}
+.kmrow .lab{font-size:.82rem;color:var(--navy2);font-weight:600}
+.kmrow input{background:var(--surface2);border:1px solid var(--line);border-radius:8px;padding:8px 9px;font-family:'JetBrains Mono';font-size:.84rem;color:var(--ink);text-align:right;width:100%}
+.kmrow input:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-soft)}
+.kmrow .cv{font-family:'JetBrains Mono';font-size:.82rem;color:var(--muted);text-align:right}
+.kmtot{display:flex;justify-content:space-between;align-items:center;margin-top:12px;padding-top:11px;border-top:1px solid var(--line);font-family:'Sora';font-weight:700;font-size:.9rem}
+.kmtot span:last-child{font-family:'JetBrains Mono';color:var(--blue-d)}
+.chk{display:flex;align-items:center;gap:9px;margin:14px 0 4px;font-size:.83rem;color:var(--navy2);font-weight:600;cursor:pointer}
+.chk input{width:17px;height:17px;accent-color:var(--blue);cursor:pointer}
+/* resumo custo */
+.rcards{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:16px}
+@media(max-width:780px){.rcards{grid-template-columns:repeat(2,1fr)}}
+.rcard{background:var(--surface);border:1px solid var(--line);border-radius:13px;box-shadow:var(--shadow);padding:16px 18px}
+.rcard.feat{background:linear-gradient(135deg,var(--navy),var(--navy2));border:none;color:#fff;box-shadow:0 8px 24px rgba(15,39,71,.28)}
+.rcard .k{font-size:.66rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);font-weight:700}
+.rcard.feat .k{color:#9fb6d4}
+.rcard .v{font-family:'JetBrains Mono';font-weight:700;font-size:1.5rem;margin-top:7px}
+.rcard .sub{font-size:.7rem;color:var(--faint);margin-top:4px;font-family:'JetBrains Mono'}
+.rmetrics{display:grid;grid-template-columns:repeat(4,1fr);gap:0;background:var(--surface);border:1px solid var(--line);border-radius:13px;box-shadow:var(--shadow);overflow:hidden;margin-bottom:16px}
+@media(max-width:780px){.rmetrics{grid-template-columns:repeat(2,1fr)}}
+.rmetrics .m{padding:15px 18px;border-right:1px solid var(--line2)}
+.rmetrics .m .k{font-size:.66rem;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);font-weight:700}
+.rmetrics .m .v{font-family:'JetBrains Mono';font-weight:700;font-size:1.18rem;color:var(--navy2);margin-top:5px}
+.terceiro{background:var(--blue-tint);border:1px solid #cfe2f7;border-radius:13px;padding:16px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.terceiro .tlab{font-family:'Sora';font-weight:700;color:var(--navy);font-size:.92rem}
+.terceiro .tval{font-family:'JetBrains Mono';font-weight:700;color:var(--blue-d);font-size:1.15rem}
+.terceiro .tpill{font-family:'JetBrains Mono';font-size:.72rem;background:#fff;border:1px solid var(--line);border-radius:7px;padding:5px 10px;color:var(--muted)}
+/* ===== CARDS MOBILE (a tabela vira cards no celular) ===== */
+.mcards{display:none}
+.mtotal{display:none}
+.mcard{background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:14px 15px;margin:10px 0;box-shadow:var(--shadow)}
+.mcard.bad{background:var(--red-bg);border-color:#f3c5c5}
+.mc-top{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.mc-cli{font-family:'Sora';font-weight:700;font-size:.95rem;color:var(--ink);line-height:1.2}
+.mc-tot{font-family:'JetBrains Mono';font-weight:700;font-size:1.2rem;color:var(--blue-d);white-space:nowrap}
+.mc-tot.err{color:var(--red)}
+.mc-sub{margin-top:7px;font-size:.8rem;color:var(--muted);display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.mc-grid{margin-top:11px;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;border-top:1px solid var(--line2);padding-top:11px}
+.mc-grid span{display:flex;flex-direction:column;gap:3px;font-family:'JetBrains Mono';font-size:.82rem;color:var(--ink)}
+.mc-grid i{font-style:normal;font-size:.6rem;text-transform:uppercase;letter-spacing:.05em;color:var(--faint);font-weight:600}
+
+/* ===== TABLET ===== */
+@media(min-width:641px) and (max-width:1000px){
+  .rmetrics{grid-template-columns:repeat(2,1fr)}
+}
+
+/* ===== MOBILE (premium) ===== */
+@media(max-width:640px){
+  body{padding-top:env(safe-area-inset-top,0)}
+  .wrap{padding:0 13px calc(60px + env(safe-area-inset-bottom,0))}
+  .topbar{border-radius:0 0 16px 16px;padding:15px 17px;gap:10px}
+  .inf{font-size:1.3rem}.logo .txt{font-size:1.04rem}.logo .txt small{letter-spacing:.2em}
+  .topbar .tool{text-align:left}.topbar .tool .t{font-size:.88rem}
+  .section-label{margin:22px 2px 11px;font-size:.65rem}
+  .card{padding:16px;border-radius:13px}
+  .card h2{font-size:.96rem}
+  /* abas largura cheia */
+  .tabbar{gap:0}
+  .tab{flex:1;justify-content:center;padding:13px 6px;font-size:.83rem;border-radius:11px 11px 0 0}
+  .tab .ti{font-size:1rem}
+  /* inputs grandes p/ toque, fonte >=16px evita zoom no iOS */
+  .srcrow{flex-direction:column}
+  .srcrow input,.fld input,.fsel,.search input,.kmrow input,.kmrow input{font-size:16px}
+  .srcrow .btn{width:100%}
+  .btn{padding:13px 18px;font-size:.95rem}
+  /* KPIs 2 col, destaque ocupa linha inteira */
+  .kpis,.kpis4{grid-template-columns:repeat(2,1fr);gap:10px}
+  .kpi{padding:13px 14px}.kpi .v{font-size:1.26rem}
+  .kpi.feat{grid-column:1 / -1}
+  /* toolbar empilhada */
+  .toolbar{gap:9px}
+  .toolbar .ttl{width:100%;margin:0}
+  .tctl{width:100%}
+  .search{flex:1 1 100%}.search input{width:100%}
+  .fsel{flex:1}.btn.toggle.sm,.btn.ghost.sm{flex:1}
+  /* esconde tabela, mostra cards */
+  .tscroll{max-height:none;overflow:visible}
+  #tbl{display:none!important}
+  .mcards{display:block}
+  .tablewrap{background:transparent;border:none;box-shadow:none;border-radius:0;overflow:visible}
+  .mtotal{display:flex;justify-content:space-between;align-items:center;background:linear-gradient(135deg,var(--navy),var(--navy2));color:#fff;border-radius:12px;padding:14px 16px;margin-top:8px;font-family:'Sora';font-weight:700;font-size:.88rem;box-shadow:var(--shadow-l)}
+  .mtotal b{font-family:'JetBrains Mono';color:var(--blue-soft);font-size:1.08rem}
+  /* cotação largura cheia */
+  .cardwrap-single{max-width:none}
+  .quote .qtot .val{font-size:1.7rem}
+  .qbreak{grid-template-columns:1fr}
+  /* tabela de preços 1 coluna */
+  .ppgrid{grid-template-columns:1fr}
+  .pp-head{padding:14px 16px}
+  /* custo */
+  .custo-cols{gap:13px}
+  .rcards{grid-template-columns:1fr 1fr;gap:10px}.rcard.feat{grid-column:1 / -1}
+  .rcard .v{font-size:1.3rem}
+  .rmetrics{grid-template-columns:1fr 1fr}
+  .rmetrics .m:nth-child(odd){border-right:1px solid var(--line2)}
+  .kmrow{grid-template-columns:1fr 70px 80px;gap:7px}
+  .kmrow .lab{font-size:.78rem}
+  .terceiro{flex-direction:column;align-items:flex-start;gap:9px;padding:15px 17px}
+  .foot{font-size:.7rem;margin-top:26px}
+}
+
+/* ===== telas muito estreitas ===== */
+@media(max-width:380px){
+  .kpis,.kpis4,.rcards{grid-template-columns:1fr}
+  .kpi.feat,.rcard.feat{grid-column:auto}
+  .mc-grid{grid-template-columns:1fr 1fr}
+}
+
+/* ===== desktop amplo: respiro premium ===== */
+@media(min-width:1180px){
+  .wrap{padding:0 28px 96px}
+}
+
 .foot{text-align:center;color:var(--faint);font-size:.74rem;margin-top:34px;line-height:1.8}
 .foot code{font-family:'JetBrains Mono';color:var(--blue-d);background:var(--surface);padding:1px 6px;border-radius:5px;border:1px solid var(--line)}
 .foot .v{display:inline-block;margin-top:6px;font-family:'JetBrains Mono';color:var(--green);font-size:.72rem}
@@ -207,29 +342,38 @@ tfoot .grand{color:var(--blue-d);font-size:1.02rem}
   </div>
 </div>
 
-<!-- ENTRADA -->
-<div class="section-label">1 · Entrada de dados</div>
-<div class="cols">
-  <div class="card">
-    <div class="ch"><span class="ic"><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-6.2-8.6"/><polyline points="21 4 21 10 15 10"/></svg></span>
-      <h2>Puxar da planilha (Grid fox log)</h2></div>
-    <p class="hint">Cole o link <b>CSV publicado</b> da aba Grid fox log e clique <b>Atualizar</b>. No Google Sheets: <i>Arquivo → Compartilhar → Publicar na web → aba "Grid fox log" → CSV</i>.</p>
-    <div class="srcrow">
-      <input id="srcurl" value="https://docs.google.com/spreadsheets/d/e/2PACX-1vSdRBTQW7CTuVS4YfbDsVe1YFb-rv31qNas7vfV8CLQVOUepbk1TDYaVp1o85OIeA/pub?output=csv" placeholder="https://docs.google.com/.../pub?gid=...&single=true&output=csv">
-      <button class="btn" id="btnPull">↻ Atualizar</button>
-    </div>
-    <div class="status" id="srcStatus"></div>
-    <details class="alt">
-      <summary>ou subir um arquivo manualmente (.xlsx / .csv)</summary>
-      <label class="drop" id="drop">
-        <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-        <div class="big">Solte o arquivo aqui ou clique</div>
-        <div class="small">lê a aba "Grid fox log" se existir, senão a primeira</div>
-        <input type="file" id="file" accept=".xlsx,.xls,.csv">
-      </label>
-    </details>
+<!-- ENTRADA (compartilhada pelas duas abas) -->
+<div class="section-label">Entrada de dados · Grid fox log</div>
+<div class="card">
+  <div class="ch"><span class="ic"><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-6.2-8.6"/><polyline points="21 4 21 10 15 10"/></svg></span>
+    <h2>Puxar da planilha (Grid fox log)</h2></div>
+  <p class="hint">Cole o link <b>CSV publicado</b> da aba Grid fox log e clique <b>Atualizar</b>. Os mesmos dados alimentam as duas abas abaixo.</p>
+  <div class="srcrow">
+    <input id="srcurl" value="https://docs.google.com/spreadsheets/d/e/2PACX-1vSdRBTQW7CTuVS4YfbDsVe1YFb-rv31qNas7vfV8CLQVOUepbk1TDYaVp1o85OIeA/pub?output=csv" placeholder="https://docs.google.com/.../pub?gid=...&single=true&output=csv">
+    <button class="btn" id="btnPull">↻ Atualizar</button>
   </div>
+  <div class="status" id="srcStatus"></div>
+  <details class="alt">
+    <summary>ou subir um arquivo manualmente (.xlsx / .csv)</summary>
+    <label class="drop" id="drop">
+      <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      <div class="big">Solte o arquivo aqui ou clique</div>
+      <div class="small">lê a aba "Grid fox log" se existir, senão a primeira</div>
+      <input type="file" id="file" accept=".xlsx,.xls,.csv">
+    </label>
+  </details>
+</div>
 
+<!-- NAV DAS ABAS -->
+<div class="tabbar">
+  <button class="tab active" data-tab="frete"><span class="ti">📦</span> Frete transportadora</button>
+  <button class="tab" data-tab="custo"><span class="ti">🚚</span> Cálculo custo próprio</button>
+</div>
+
+<!-- ================= ABA 1: FRETE ================= -->
+<div class="tabpane active" id="tab-frete">
+<div class="section-label">Cotação rápida</div>
+<div class="cardwrap-single">
   <div class="card">
     <div class="ch"><span class="ic"><svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="13" y2="16"/></svg></span>
       <h2>Cotação rápida</h2></div>
@@ -255,7 +399,7 @@ tfoot .grand{color:var(--blue-d);font-size:1.02rem}
 </div>
 
 <!-- TABELA DE PRECOS -->
-<div class="section-label">2 · Tabela de preços (referência)</div>
+<div class="section-label">Tabela de preços (referência)</div>
 <div class="pricepanel" id="pp">
   <div class="pp-head" id="ppHead">
     <span class="ic"><svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></span>
@@ -269,7 +413,7 @@ tfoot .grand{color:var(--blue-d);font-size:1.02rem}
 </div>
 
 <!-- RESULTADOS -->
-<div class="section-label">3 · Resultado</div>
+<div class="section-label">Resultado por carga</div>
 <div class="kpis">
   <div class="kpi"><div class="k">Cargas</div><div class="v" id="sCount">—</div><div class="sub" id="sCountSub"></div></div>
   <div class="kpi"><div class="k">Peso total</div><div class="v mono" id="sPeso">—</div></div>
@@ -319,7 +463,76 @@ tfoot .grand{color:var(--blue-d);font-size:1.02rem}
       <tfoot id="tfoot"></tfoot>
     </table>
   </div>
+  <div class="mcards" id="mcards"></div>
+  <div class="mtotal" id="mTotal"></div>
 </div>
+
+</div><!-- /tab-frete -->
+
+<!-- ================= ABA 2: CUSTO PROPRIO ================= -->
+<div class="tabpane" id="tab-custo">
+
+<div class="section-label">Dados puxados da Grid fox log</div>
+<div class="kpis kpis4">
+  <div class="kpi"><div class="k">Pedidos</div><div class="v" id="cNped">—</div></div>
+  <div class="kpi"><div class="k">Valor total dos pedidos</div><div class="v mono" id="cValor">—</div></div>
+  <div class="kpi"><div class="k">Volumes</div><div class="v mono" id="cVol">—</div></div>
+  <div class="kpi"><div class="k">Peso total</div><div class="v mono" id="cPeso">—</div></div>
+</div>
+
+<div class="section-label">Parâmetros da viagem</div>
+<div class="custo-cols">
+  <div class="card">
+    <div class="ch"><span class="ic"><svg viewBox="0 0 24 24"><path d="M12 21s-7-6.3-7-11a7 7 0 0 1 14 0c0 4.7-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg></span>
+      <h2>Rota</h2></div>
+    <div class="fld"><label>Ponto de partida / retorno</label><input id="kOrigem" value="Av. Guaraciaba, 313 - RP2, Mauá - SP, 09370-840"></div>
+    <div class="fld" style="margin-top:11px"><label>KM total da viagem (ida e volta)</label><input id="kKm" type="number" step="1" value="2138"></div>
+    <div class="kmnote" id="kKmNote">Preenchido manualmente — a coluna <b>Distancia</b> da Grid fox log está vazia. Se ela vier preenchida no export, eu somo automático.</div>
+    <div class="row2" style="margin-top:11px">
+      <div class="fld"><label>Qtd motoristas</label><input id="kMot" type="number" step="1" value="2"></div>
+      <div class="fld"><label>Qtd diárias</label><input id="kDia" type="number" step="1" value="3"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="ch"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1l2-1.5-2-3.4-2.3 1a7 7 0 0 0-1.7-1l-.3-2.6h-4l-.3 2.6a7 7 0 0 0-1.7 1l-2.3-1-2 3.4 2 1.5a7 7 0 0 0 0 2l-2 1.5 2 3.4 2.3-1a7 7 0 0 0 1.7 1l.3 2.6h4l.3-2.6a7 7 0 0 0 1.7-1l2.3 1 2-3.4-2-1.5a7 7 0 0 0 .1-1z"/></svg></span>
+      <h2>Custo por km</h2></div>
+    <p class="hint" style="margin-bottom:11px">R$/km de cada item · custo na viagem = R$/km × KM.</p>
+    <div class="kmtable" id="kmTable"></div>
+    <div class="kmtot"><span>Total R$/km · custo veículo</span><span id="kKmRate">—</span></div>
+  </div>
+
+  <div class="card">
+    <div class="ch"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg></span>
+      <h2>Motorista &amp; diárias</h2></div>
+    <div class="row2">
+      <div class="fld"><label>Salário base (mês)</label><input id="kSal" type="number" step="0.01" value="2763.64"></div>
+      <div class="fld"><label>Hora extra média (mês)</label><input id="kHE" type="number" step="0.01" value="2310.43"></div>
+    </div>
+    <div class="row2" style="margin-top:11px">
+      <div class="fld"><label>Dias úteis no mês</label><input id="kDias" type="number" step="1" value="22"></div>
+      <div class="fld"><label>Custo diário (R$)</label><input id="kDiario" type="number" step="0.01" value="320.68"></div>
+    </div>
+    <div class="kmnote" id="kDiarioNote"></div>
+    <label class="chk"><input type="checkbox" id="kIncDiaria"> Incluir diárias (hospedagem + refeição) no total</label>
+    <div class="row2">
+      <div class="fld"><label>Hospedagem / diária</label><input id="kHosp" type="number" step="0.01" value="200"></div>
+      <div class="fld"><label>Refeição / diária</label><input id="kRef" type="number" step="0.01" value="40"></div>
+    </div>
+  </div>
+</div>
+
+<div class="section-label">Resumo da viagem</div>
+<div class="rcards">
+  <div class="rcard"><div class="k">Custo veículo</div><div class="v mono" id="rVeic">—</div><div class="sub" id="rVeicSub"></div></div>
+  <div class="rcard"><div class="k">Custo motorista</div><div class="v mono" id="rMot">—</div><div class="sub" id="rMotSub"></div></div>
+  <div class="rcard" id="rDiariaCard" style="display:none"><div class="k">Diárias</div><div class="v mono" id="rDiaria">—</div><div class="sub" id="rDiariaSub"></div></div>
+  <div class="rcard feat"><div class="k">Custo total da viagem</div><div class="v mono" id="rTotal">—</div></div>
+</div>
+<div class="rmetrics" id="rMetrics"></div>
+<div class="terceiro" id="rTerceiro"></div>
+
+</div><!-- /tab-custo -->
 
 <div class="foot">
   Cálculo idêntico à aba <code>Plan1</code> · Frete peso = máx(Peso × R$/kg, mínimo) · Total = (Frete peso + GRIS + Ad Valorem + Pedágio + CT-e + Despacho) ÷ 0,88 (ICMS 12% por dentro)<br>
@@ -401,7 +614,8 @@ document.getElementById('mcalc').onclick=()=>{
 
 /* parsing comum */
 const HCID=['cidade','municipio'], HPESO=['peso','peso (kgs)','kg','kgs'], HVAL=['valor','valor nf','vlr'],
-      HCLI=['cliente','razao social','fantasia'], HPED=['n.ped.','n.ped','nped','pedido','n. pedido','nro'];
+      HCLI=['cliente','razao social','fantasia'], HPED=['n.ped.','n.ped','nped','pedido','n. pedido','nro'],
+      HVOL=['volumes','volume','vol'], HCEP=['cep'], HDIST=['distancia'];
 function findCol(h,names){for(let i=0;i<h.length;i++){const x=norm(h[i]);for(const n of names)if(x===norm(n))return i;}
   for(let i=0;i<h.length;i++){const x=norm(h[i]);for(const n of names)if(x&&x.includes(norm(n)))return i;}return -1;}
 function parseWorkbook(wb){
@@ -413,12 +627,14 @@ function parseWorkbook(wb){
   if(hr<0)hr=0;
   const headers=rows[hr]||[];
   const ci=findCol(headers,HCID),pi=findCol(headers,HPESO),vi=findCol(headers,HVAL),
-        cli=findCol(headers,HCLI),pedi=findCol(headers,HPED);
+        cli=findCol(headers,HCLI),pedi=findCol(headers,HPED),
+        voli=findCol(headers,HVOL),cepi=findCol(headers,HCEP),disti=findCol(headers,HDIST);
   if(ci<0||vi<0)throw new Error('Não encontrei as colunas Cidade e/ou Valor.');
   const data=[];
   for(let i=hr+1;i<rows.length;i++){const row=rows[i];if(!row)continue;const cidade=row[ci];
     if(cidade==null||String(cidade).trim()===''||norm(cidade)==='CIDADE')continue;
-    data.push({ped:pedi>=0?row[pedi]:'',cli:cli>=0?row[cli]:'',cidade,peso:pi>=0?row[pi]:0,valor:row[vi]});}
+    data.push({ped:pedi>=0?row[pedi]:'',cli:cli>=0?row[cli]:'',cidade,peso:pi>=0?row[pi]:0,valor:row[vi],
+      vol:voli>=0?row[voli]:0,cep:cepi>=0?row[cepi]:'',dist:disti>=0?row[disti]:null});}
   return {data,sheet};
 }
 
@@ -513,7 +729,19 @@ function render(data,origem){
   sel.innerHTML=opts;
   document.querySelectorAll('.results').forEach(e=>e.classList.add('show'));
   applyView();
+  buildCustoFromGrid(data);
   document.getElementById('tscroll').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+function mcardHTML(x){
+  if(!x.r){
+    return '<div class="mcard bad"><div class="mc-top"><div class="mc-cli">'+(x.cli||'(sem nome)')+'</div><div class="mc-tot err">—</div></div>'+
+      '<div class="mc-sub">'+(x.cidade||'')+' &nbsp;<span class="tag err">não atendida</span></div></div>';
+  }
+  const r=x.r;
+  return '<div class="mcard"><div class="mc-top"><div class="mc-cli">'+(x.cli||'(sem nome)')+'</div><div class="mc-tot">'+BRL(r.total)+'</div></div>'+
+    '<div class="mc-sub">'+x.cidade+' &nbsp;<span class="rg">'+r.regiao+'</span> &nbsp;<span class="tag '+(r.base==='Mínimo'?'min':'kg')+'">'+r.base+'</span></div>'+
+    '<div class="mc-grid"><span><i>Peso</i>'+NUM(r.peso)+(r.peso===0?' ⚠':' kg')+'</span><span><i>Valor NF</i>'+BRL(r.valor)+'</span><span><i>Frete peso</i>'+BRL(r.fretePeso)+'</span></div></div>';
 }
 
 function applyView(){
@@ -531,18 +759,18 @@ function applyView(){
       return ((va||0)-(vb||0))*sortDir;
     });
   }
-  const tbody=document.getElementById('tbody');
-  if(!rows.length){
-    tbody.innerHTML='<tr><td colspan="14" class="norows">Nenhuma carga encontrada com esse filtro.</td></tr>';
-  }else{
-    tbody.innerHTML=rows.map(rowHTML).join('');
-  }
-  // subtotal (rodapé) sobre o que está visível
+  // subtotal sobre o visível
   let vP=0,vV=0,vF=0,vn=0;
   rows.forEach(x=>{ if(x.r){ vn++; vP+=x.peso; vV+=x.valor; vF+=x.total; } });
   const filtered=(q||rf);
+  // desktop: tabela
+  const tbody=document.getElementById('tbody');
+  tbody.innerHTML = rows.length ? rows.map(rowHTML).join('') : '<tr><td colspan="14" class="norows">Nenhuma carga encontrada com esse filtro.</td></tr>';
   document.getElementById('tfoot').innerHTML='<tr><td colspan="4" class="l">'+(filtered?'SUBTOTAL FILTRADO':'TOTAL')+' · '+vn+' cargas</td>'+
     '<td>'+NUM(vP)+'</td><td>'+BRL(vV)+'</td><td colspan="6"></td><td></td><td class="grand">'+BRL(vF)+'</td></tr>';
+  // mobile: cards + total
+  document.getElementById('mcards').innerHTML = rows.length ? rows.map(mcardHTML).join('') : '<div class="norows">Nenhuma carga encontrada com esse filtro.</div>';
+  document.getElementById('mTotal').innerHTML = '<span>'+(filtered?'Subtotal filtrado':'Total')+' · '+vn+' cargas</span><b>'+BRL(vF)+'</b>';
 }
 
 /* controles da tabela */
@@ -575,6 +803,104 @@ document.getElementById('exp').onclick=()=>{
   const blob=new Blob(['\ufeff'+lines.join('\n')],{type:'text/csv;charset=utf-8'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='frete_calculado.csv';a.click();
 };
+
+/* ===================== ABA CUSTO PRÓPRIO ===================== */
+const VEIC_CATS=[['Diesel',1.40],['Pneus / Manutenção',0.36],['Seguro / IPVA',0.20],['Depreciação',0.40],['Pedágio / Rastreador',0.25]];
+let GRID={nped:0,valor:0,volumes:0,peso:0,distSum:0,distCount:0};
+const gv=id=>toNum(document.getElementById(id).value);
+
+(function buildKmTable(){
+  const wrap=document.getElementById('kmTable');
+  wrap.innerHTML=VEIC_CATS.map((c,i)=>
+    '<div class="kmrow"><span class="lab">'+c[0]+'</span>'+
+    '<input id="km'+i+'" type="number" step="0.01" value="'+c[1].toFixed(2)+'">'+
+    '<span class="cv" id="kmc'+i+'">—</span></div>').join('');
+  VEIC_CATS.forEach((c,i)=>document.getElementById('km'+i).addEventListener('input',renderCusto));
+})();
+
+function buildCustoFromGrid(data){
+  let nped=0,valor=0,volumes=0,peso=0,distSum=0,distCount=0;
+  data.forEach(d=>{nped++; valor+=toNum(d.valor); volumes+=toNum(d.vol); peso+=toNum(d.peso);
+    if(d.dist!=null&&String(d.dist).trim()!==''){const v=toNum(d.dist); if(v){distSum+=v;distCount++;}}});
+  GRID={nped,valor,volumes,peso,distSum,distCount};
+  document.getElementById('cNped').textContent=nped;
+  document.getElementById('cValor').textContent=BRL(valor);
+  document.getElementById('cVol').textContent=NUM(volumes);
+  document.getElementById('cPeso').textContent=NUM(peso)+' kg';
+  const note=document.getElementById('kKmNote');
+  if(distCount>0){
+    document.getElementById('kKm').value=Math.round(distSum);
+    note.className='kmnote blue';
+    note.innerHTML='✓ KM somado automaticamente da coluna <b>Distancia</b> ('+distCount+' pedido(s) · '+NUM(distSum)+' km). Edite se precisar.';
+  }else{
+    note.className='kmnote';
+    note.innerHTML='Preenchido manualmente — a coluna <b>Distancia</b> da Grid fox log está vazia. Se ela vier preenchida no export, eu somo automático.';
+  }
+  renderCusto();
+}
+
+function renderCusto(){
+  const km=gv('kKm'), mot=gv('kMot'), dia=gv('kDia');
+  // custo por km
+  let rate=0; VEIC_CATS.forEach((c,i)=>{const r=gv('km'+i); rate+=r;
+    document.getElementById('kmc'+i).textContent=BRL(r*km);});
+  const veic=rate*km;
+  document.getElementById('kKmRate').textContent='R$ '+NUM(rate)+'/km · '+BRL(veic);
+  // motorista
+  const sal=gv('kSal'), he=gv('kHE'), dias=gv('kDias')||1;
+  const diarioCalc=(sal+he)/dias, diario=gv('kDiario');
+  const dn=document.getElementById('kDiarioNote');
+  const diff=Math.abs(diario-diarioCalc)>0.5;
+  dn.className='kmnote'+(diff?'':' blue');
+  dn.innerHTML=(diff?'⚠ ':'✓ ')+'(salário + HE) ÷ dias = <b>'+BRL(diarioCalc)+'</b>'+
+    (diff?' — diferente do custo diário informado ('+BRL(diario)+'). Confira os valores.':' — confere com o informado.');
+  const motTot=diario*mot*dia;
+  // diárias
+  const incD=document.getElementById('kIncDiaria').checked;
+  const hosp=gv('kHosp'), ref=gv('kRef'), diariaTot=(hosp+ref)*mot*dia;
+  document.getElementById('rDiariaCard').style.display=incD?'':'none';
+  // total
+  const total=veic+motTot+(incD?diariaTot:0);
+  document.getElementById('rVeic').textContent=BRL(veic);
+  document.getElementById('rVeicSub').textContent=NUM(km)+' km × R$ '+NUM(rate)+'/km';
+  document.getElementById('rMot').textContent=BRL(motTot);
+  document.getElementById('rMotSub').textContent=BRL(diario)+'/dia × '+NUM(mot)+' mot. × '+NUM(dia)+' diárias';
+  if(incD){document.getElementById('rDiaria').textContent=BRL(diariaTot);
+    document.getElementById('rDiariaSub').textContent='('+BRL(hosp)+' + '+BRL(ref)+') × '+NUM(mot)+' × '+NUM(dia);}
+  document.getElementById('rTotal').textContent=BRL(total);
+  // métricas sobre a carga
+  const g=GRID;
+  const pct=g.valor? (total/g.valor*100):0;
+  const M=[
+    ['% sobre valor da carga', g.valor?NUM(pct)+'%':'—'],
+    ['Custo por pedido', g.nped?BRL(total/g.nped):'—'],
+    ['Custo por volume', g.volumes?BRL(total/g.volumes):'—'],
+    ['Custo por kg', g.peso?BRL(total/g.peso):'—']
+  ];
+  document.getElementById('rMetrics').innerHTML=M.map(m=>'<div class="m"><div class="k">'+m[0]+'</div><div class="v">'+m[1]+'</div></div>').join('');
+  // custo para terceiro (regra da Super abc: km>800 => negociar)
+  const t=document.getElementById('rTerceiro');
+  if(km>800){
+    t.innerHTML='<span class="tlab">Custo para terceiro</span><span class="tval">Negociar</span>'+
+      '<span class="tpill">rota longa (&gt; 800 km) — preço fechado caso a caso</span>';
+  }else{
+    t.innerHTML='<span class="tlab">Sugestão p/ terceiro</span>'+
+      '<span class="tval">'+BRL(g.valor*0.029)+'</span><span class="tpill">2,9% do valor</span>'+
+      '<span class="tval">'+BRL(g.valor*0.034)+'</span><span class="tpill">3,4% do valor</span>';
+  }
+}
+['kKm','kMot','kDia','kSal','kHE','kDias','kDiario','kHosp','kRef'].forEach(id=>
+  document.getElementById(id).addEventListener('input',renderCusto));
+document.getElementById('kIncDiaria').addEventListener('change',renderCusto);
+renderCusto();
+
+/* troca de abas */
+document.querySelectorAll('.tab').forEach(tb=>tb.onclick=()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.tabpane').forEach(x=>x.classList.remove('active'));
+  tb.classList.add('active');
+  document.getElementById('tab-'+tb.getAttribute('data-tab')).classList.add('active');
+});
 </script>
 </body>
 </html>
