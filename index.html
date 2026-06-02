@@ -224,6 +224,9 @@ tfoot .grand{color:var(--blue-d);font-size:1.02rem}
 .tabpane{display:none}
 .tabpane.active{display:block;animation:fade .3s}
 .cardwrap-single{max-width:480px}
+.twocol{display:flex;gap:14px;align-items:flex-start}
+.twocol>*{flex:1;min-width:0}
+@media(max-width:760px){.twocol{flex-direction:column}.twocol>*{width:100%}}
 .kpis4{grid-template-columns:repeat(4,1fr)}
 @media(max-width:780px){.kpis4{grid-template-columns:repeat(2,1fr)}}
 /* custo layout */
@@ -274,6 +277,27 @@ tfoot .grand{color:var(--blue-d);font-size:1.02rem}
 .cbody{overflow:hidden;transition:max-height .34s cubic-bezier(.4,0,.2,1),opacity .26s ease,margin-top .34s ease}
 .card.collapsed .cbody{opacity:0;margin-top:-4px}
 .card.collapsed{padding-bottom:20px}
+
+/* ===== COMPARATIVO DE MODAIS ===== */
+.cmp-grid{display:flex;gap:10px;flex-wrap:wrap;margin-top:2px}
+.cmp-col{flex:1;min-width:118px;border:1px solid var(--line);border-radius:11px;padding:13px 15px;background:var(--surface2)}
+.cmp-col.feat{background:var(--navy);color:#fff;border:none}
+.cmp-col .t{font-size:.64rem;text-transform:uppercase;letter-spacing:.07em;font-weight:700;color:var(--muted)}
+.cmp-col.feat .t{color:#9fb6d4}
+.cmp-col .v{font-family:'JetBrains Mono';font-weight:700;font-size:1.2rem;margin-top:6px;line-height:1.1}
+.cmp-col .s{font-size:.7rem;margin-top:6px;color:var(--muted)}
+.cmp-col.feat .s{color:#cdd9ea}
+.cmp-badge{display:inline-block;border-radius:6px;padding:1px 7px;font-weight:700;font-family:'JetBrains Mono';font-size:.68rem}
+.cmp-badge.good{background:var(--green-bg);color:var(--green)}
+.cmp-badge.bad{background:var(--red-bg);color:var(--red)}
+.cmp-head{margin-top:13px;background:var(--blue-soft);color:var(--blue-d);border-radius:9px;padding:11px 14px;font-size:.82rem;font-weight:600;line-height:1.45}
+details.cmp-strat{margin-top:11px;border:1px dashed var(--line);border-radius:9px;overflow:hidden;background:var(--blue-tint)}
+details.cmp-strat>summary{cursor:pointer;padding:11px 14px;font-family:'Sora';font-weight:600;font-size:.8rem;color:var(--navy2);list-style:none;user-select:none}
+details.cmp-strat>summary::-webkit-details-marker{display:none}
+details.cmp-strat>summary::before{content:'▸';color:var(--blue);margin-right:7px;display:inline-block;transition:transform .15s}
+details.cmp-strat[open]>summary::before{transform:rotate(90deg)}
+.cmp-strat .stratbody{padding:2px 15px 13px;font-size:.79rem;line-height:1.5;color:var(--ink)}
+.cmp-strat .stratbody p{margin:7px 0}
 
 /* ===== IMPRESSÃO / PDF (relatório premium) ===== */
 #printArea{display:none}
@@ -461,8 +485,8 @@ table.rep-tbl tfoot td{border-top:2px solid var(--navy);font-weight:700;backgrou
 
 <!-- ================= ABA 1: FRETE ================= -->
 <div class="tabpane active" id="tab-frete">
-<div class="section-label">Cotação rápida</div>
-<div class="cardwrap-single">
+<div class="section-label">Cotação rápida & comparativo</div>
+<div class="twocol">
   <div class="card collapsible-card collapsed" id="cardCotacao">
     <div class="ch"><span class="ic"><svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="13" y2="16"/></svg></span>
       <h2>Cotação rápida</h2><span class="carr" title="ocultar / mostrar">▾</span></div>
@@ -486,6 +510,12 @@ table.rep-tbl tfoot td{border-top:2px solid var(--navy);font-weight:700;backgrou
       <div class="qbreak" id="qbreak"></div>
     </div>
     </div><!-- /cbody -->
+  </div>
+
+  <div class="card" id="cmpCard">
+    <div class="ch"><span class="ic"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><rect x="7" y="11" width="3" height="7"/><rect x="12" y="7" width="3" height="11"/><rect x="17" y="13" width="3" height="5"/></svg></span>
+      <h2>Transportadora × Veículo próprio</h2></div>
+    <div id="cmpBody"><p class="hint">Suba o arquivo para comparar.</p></div>
   </div>
 </div>
 
@@ -526,7 +556,7 @@ table.rep-tbl tfoot td{border-top:2px solid var(--navy);font-weight:700;backgrou
     <select class="fsel" id="fRegion"><option value="">Todas as regiões</option></select>
     <button class="btn toggle sm" id="fCompact">Compacta</button>
     <button class="btn ghost sm" id="exp">Exportar CSV</button>
-    <button class="btn ghost sm" id="btnPrintFrete">🖨 PDF</button>
+    <button class="btn ghost sm" id="btnPrintFrete">🖨 Imprimir PDF</button>
   </div>
 </div>
 
@@ -760,6 +790,7 @@ function handleFile(f){const rd=new FileReader();
 
 /* render */
 let LAST=[];               // todas as linhas calculadas
+let CMP={frete:null,valor:null,proprio:null,km:null};  // comparativo de modais
 let sortKey=null, sortDir=1;  // 1=asc, -1=desc
 let compact=false;
 
@@ -821,6 +852,7 @@ function render(data,origem){
   sel.innerHTML=opts;
   document.querySelectorAll('.results').forEach(e=>e.classList.add('show'));
   applyView();
+  CMP.frete=nF; CMP.valor=nV;
   buildCustoFromGrid(data);
   document.getElementById('tscroll').scrollIntoView({behavior:'smooth',block:'nearest'});
 }
@@ -982,11 +1014,36 @@ function renderCusto(){
       '<span class="tval">'+BRL(g.valor*0.029)+'</span><span class="tpill">2,9% do valor</span>'+
       '<span class="tval">'+BRL(g.valor*0.034)+'</span><span class="tpill">3,4% do valor</span>';
   }
+  CMP.proprio=total; CMP.km=km; renderCompare();
 }
 ['kKm','kMot','kDia','kSal','kHE','kDias','kDiario','kHosp','kRef'].forEach(id=>
   document.getElementById(id).addEventListener('input',renderCusto));
 document.getElementById('kIncDiaria').addEventListener('change',renderCusto);
 renderCusto();
+
+/* ===================== COMPARATIVO DE MODAIS ===================== */
+function pctTxt(d){ return (d>=0?'+':'−')+NUM(Math.abs(d))+'%'; }
+function renderCompare(){
+  const el=document.getElementById('cmpBody'); if(!el) return;
+  if(CMP.frete==null||CMP.proprio==null){ el.innerHTML='<p class="hint">Suba o arquivo para comparar.</p>'; return; }
+  const frete=CMP.frete, prop=CMP.proprio, valor=CMP.valor||0, longa=CMP.km>800;
+  const terc=(valor*0.029 + valor*0.034)/2;            // referência de terceiro
+  const diff = frete? (prop-frete)/frete*100 : 0;      // veículo próprio vs tabela; negativo = mais barato
+  const cheaper = prop<=frete;
+  const cols='<div class="cmp-grid">'+
+    '<div class="cmp-col feat"><div class="t">Transportadora (tabela)</div><div class="v">'+BRL(frete)+'</div><div class="s">preço cobrado do cliente</div></div>'+
+    '<div class="cmp-col"><div class="t">Veículo próprio</div><div class="v">'+BRL(prop)+'</div><div class="s">custo da viagem</div></div>'+
+  '</div>';
+  const head='Veículo próprio é <b>'+NUM(Math.abs(diff))+'% '+(cheaper?'mais barato':'mais caro')+'</b> que a tabela da transportadora'+
+    (cheaper?(' — margem de '+BRL(frete-prop)+'.'):(' — '+BRL(prop-frete)+' acima do preço.'));
+  let s='';
+  if(cheaper) s+='<p>Rodar com <b>veículo próprio</b> sai mais barato que o preço de tabela: sobra uma margem de <b>'+BRL(frete-prop)+'</b> ('+NUM((frete-prop)/frete*100)+'% do preço) cobrando a tabela e rodando interno.</p>';
+  else s+='<p>⚠ O custo do veículo próprio ('+BRL(prop)+') está <b>acima</b> do preço de tabela ('+BRL(frete)+') — prejuízo de '+BRL(prop-frete)+'. Reveja o preço cobrado ou os custos (km, diárias).</p>';
+  s+='<p>Referência de terceiro (2,9–3,4% do valor): ~'+BRL(terc)+(longa?' — rota longa: trate como estimativa e negocie.':'.')+'</p>';
+  if(cheaper) s+='<p>Como o veículo próprio é mais barato e você controla o serviço, vale rodar interno — se houver veículo e motorista livres. Use terceiro como folga nos picos.</p>';
+  el.innerHTML=cols+'<div class="cmp-head">'+head+'</div>'+
+    '<details class="cmp-strat"><summary>💡 Ver sugestão de estratégia</summary><div class="stratbody">'+s+'</div></details>';
+}
 
 /* ===================== IMPRESSÃO / PDF (relatório premium) ===================== */
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
