@@ -127,6 +127,9 @@ details.alt summary:hover{color:var(--blue-d)}
 .results.show{display:block;animation:fade .35s}
 .kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:16px}
 @media(max-width:780px){.kpis{grid-template-columns:repeat(2,1fr)}}
+.kpis6{grid-template-columns:repeat(6,1fr)}
+.kpis5{grid-template-columns:repeat(5,1fr)}
+@media(min-width:781px) and (max-width:1080px){.kpis6{grid-template-columns:repeat(3,1fr)}.kpis5{grid-template-columns:repeat(3,1fr)}}
 .kpi{background:var(--surface);border:1px solid var(--line);border-radius:13px;box-shadow:var(--shadow);padding:15px 17px}
 .kpi.feat{background:linear-gradient(135deg,var(--blue),var(--blue-d));border:none;color:#fff;box-shadow:0 6px 20px rgba(31,111,214,.3)}
 .kpi .k{font-size:.66rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);font-weight:700}
@@ -237,6 +240,16 @@ tfoot .grand{color:var(--blue-d);font-size:1.02rem}
 .terceiro .tlab{font-family:'Sora';font-weight:700;color:var(--navy);font-size:.92rem}
 .terceiro .tval{font-family:'JetBrains Mono';font-weight:700;color:var(--blue-d);font-size:1.15rem}
 .terceiro .tpill{font-family:'JetBrains Mono';font-size:.72rem;background:#fff;border:1px solid var(--line);border-radius:7px;padding:5px 10px;color:var(--muted)}
+/* ===== CARD COLAPSÁVEL (ocultar animado) ===== */
+.collapsible-card .ch{cursor:pointer;user-select:none}
+.collapsible-card .ch:hover h2{color:var(--blue-d)}
+.ch .carr{margin-left:auto;color:var(--muted);font-size:.8rem;line-height:1;transition:transform .32s cubic-bezier(.4,0,.2,1);flex:none}
+.collapsible-card .ch:hover .carr{color:var(--blue-d)}
+.card.collapsed .ch .carr{transform:rotate(-90deg)}
+.cbody{overflow:hidden;transition:max-height .34s cubic-bezier(.4,0,.2,1),opacity .26s ease,margin-top .34s ease}
+.card.collapsed .cbody{opacity:0;margin-top:-4px}
+.card.collapsed{padding-bottom:20px}
+
 /* ===== CARDS MOBILE (a tabela vira cards no celular) ===== */
 .mcards{display:none}
 .mtotal{display:none}
@@ -276,7 +289,7 @@ tfoot .grand{color:var(--blue-d);font-size:1.02rem}
   .srcrow .btn{width:100%}
   .btn{padding:13px 18px;font-size:.95rem}
   /* KPIs 2 col, destaque ocupa linha inteira */
-  .kpis,.kpis4{grid-template-columns:repeat(2,1fr);gap:10px}
+  .kpis,.kpis4,.kpis5,.kpis6{grid-template-columns:repeat(2,1fr);gap:10px}
   .kpi{padding:13px 14px}.kpi .v{font-size:1.26rem}
   .kpi.feat{grid-column:1 / -1}
   /* toolbar empilhada */
@@ -313,7 +326,7 @@ tfoot .grand{color:var(--blue-d);font-size:1.02rem}
 
 /* ===== telas muito estreitas ===== */
 @media(max-width:380px){
-  .kpis,.kpis4,.rcards{grid-template-columns:1fr}
+  .kpis,.kpis4,.kpis5,.kpis6,.rcards{grid-template-columns:1fr}
   .kpi.feat,.rcard.feat{grid-column:auto}
   .mc-grid{grid-template-columns:1fr 1fr}
 }
@@ -374,9 +387,10 @@ tfoot .grand{color:var(--blue-d);font-size:1.02rem}
 <div class="tabpane active" id="tab-frete">
 <div class="section-label">Cotação rápida</div>
 <div class="cardwrap-single">
-  <div class="card">
+  <div class="card collapsible-card" id="cardCotacao">
     <div class="ch"><span class="ic"><svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="13" y2="16"/></svg></span>
-      <h2>Cotação rápida</h2></div>
+      <h2>Cotação rápida</h2><span class="carr" title="ocultar / mostrar">▾</span></div>
+    <div class="cbody">
     <p class="hint">Calcule uma carga só, sem subir nada.</p>
     <div class="manual">
       <div class="fld ac">
@@ -395,6 +409,7 @@ tfoot .grand{color:var(--blue-d);font-size:1.02rem}
       <div id="qmeta"></div>
       <div class="qbreak" id="qbreak"></div>
     </div>
+    </div><!-- /cbody -->
   </div>
 </div>
 
@@ -414,8 +429,9 @@ tfoot .grand{color:var(--blue-d);font-size:1.02rem}
 
 <!-- RESULTADOS -->
 <div class="section-label">Resultado por carga</div>
-<div class="kpis">
+<div class="kpis kpis6">
   <div class="kpi"><div class="k">Cargas</div><div class="v" id="sCount">—</div><div class="sub" id="sCountSub"></div></div>
+  <div class="kpi"><div class="k">Cidades</div><div class="v" id="sCidades">—</div><div class="sub">atendidas</div></div>
   <div class="kpi"><div class="k">Peso total</div><div class="v mono" id="sPeso">—</div></div>
   <div class="kpi"><div class="k">Valor NF total</div><div class="v mono" id="sValor">—</div></div>
   <div class="kpi"><div class="k">Frete médio</div><div class="v mono" id="sMedio">—</div><div class="sub" id="sPct"></div></div>
@@ -473,8 +489,9 @@ tfoot .grand{color:var(--blue-d);font-size:1.02rem}
 <div class="tabpane" id="tab-custo">
 
 <div class="section-label">Dados puxados da Grid fox log</div>
-<div class="kpis kpis4">
+<div class="kpis kpis5">
   <div class="kpi"><div class="k">Pedidos</div><div class="v" id="cNped">—</div></div>
+  <div class="kpi"><div class="k">Cidades</div><div class="v" id="cCidades">—</div><div class="sub">na rota</div></div>
   <div class="kpi"><div class="k">Valor total dos pedidos</div><div class="v mono" id="cValor">—</div></div>
   <div class="kpi"><div class="k">Volumes</div><div class="v mono" id="cVol">—</div></div>
   <div class="kpi"><div class="k">Peso total</div><div class="v mono" id="cPeso">—</div></div>
@@ -705,10 +722,12 @@ function render(data,origem){
     }
   });
   // KPIs (sempre sobre o conjunto completo)
+  const cidSet=new Set(); LAST.forEach(x=>{ if(x.r) cidSet.add(norm(x.cidade)); });
   document.getElementById('tbl').style.display=''; document.getElementById('empty').style.display='none';
   document.getElementById('toolbar').style.display='flex';
   document.getElementById('srcName').textContent=origem?('· '+origem):'';
   document.getElementById('sCount').textContent=n;
+  document.getElementById('sCidades').textContent=cidSet.size;
   document.getElementById('sCountSub').textContent=(data.length>n?((data.length-n)+' fora da cobertura'):'todas atendidas');
   document.getElementById('sPeso').textContent=NUM(nP)+' kg';
   document.getElementById('sValor').textContent=BRL(nV);
@@ -819,11 +838,13 @@ const gv=id=>toNum(document.getElementById(id).value);
 })();
 
 function buildCustoFromGrid(data){
-  let nped=0,valor=0,volumes=0,peso=0,distSum=0,distCount=0;
+  let nped=0,valor=0,volumes=0,peso=0,distSum=0,distCount=0; const cidSet=new Set();
   data.forEach(d=>{nped++; valor+=toNum(d.valor); volumes+=toNum(d.vol); peso+=toNum(d.peso);
+    if(d.cidade&&String(d.cidade).trim()) cidSet.add(norm(d.cidade));
     if(d.dist!=null&&String(d.dist).trim()!==''){const v=toNum(d.dist); if(v){distSum+=v;distCount++;}}});
-  GRID={nped,valor,volumes,peso,distSum,distCount};
+  GRID={nped,valor,volumes,peso,distSum,distCount,cidades:cidSet.size};
   document.getElementById('cNped').textContent=nped;
+  document.getElementById('cCidades').textContent=cidSet.size;
   document.getElementById('cValor').textContent=BRL(valor);
   document.getElementById('cVol').textContent=NUM(volumes);
   document.getElementById('cPeso').textContent=NUM(peso)+' kg';
@@ -893,6 +914,29 @@ function renderCusto(){
   document.getElementById(id).addEventListener('input',renderCusto));
 document.getElementById('kIncDiaria').addEventListener('change',renderCusto);
 renderCusto();
+
+/* ocultar/mostrar animado de cards */
+function setupCollapsible(cardId){
+  const card=document.getElementById(cardId); if(!card) return;
+  const head=card.querySelector('.ch'), body=card.querySelector('.cbody');
+  function open(animate){
+    card.classList.remove('collapsed');
+    if(animate){
+      body.style.maxHeight=body.scrollHeight+'px';
+      body.addEventListener('transitionend',function te(e){ if(e.propertyName!=='max-height')return;
+        body.style.maxHeight='none'; body.style.overflow='visible'; body.removeEventListener('transitionend',te); });
+    }else{ body.style.maxHeight='none'; body.style.overflow='visible'; }
+  }
+  function close(){
+    body.style.overflow='hidden';
+    body.style.maxHeight=body.scrollHeight+'px';
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{ body.style.maxHeight='0px'; }));
+    card.classList.add('collapsed');
+  }
+  head.addEventListener('click',()=>{ card.classList.contains('collapsed')?open(true):close(); });
+  open(false);
+}
+setupCollapsible('cardCotacao');
 
 /* troca de abas */
 document.querySelectorAll('.tab').forEach(tb=>tb.onclick=()=>{
