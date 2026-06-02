@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Infinity Log · Calculadora de Frete</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+/* ===== PALETA DA MARCA (ajuste aqui se tiver os hex exatos) ===== */
+:root{
+  --navy:#0f2747; --navy2:#173a64; --blue:#1f6fd6; --blue-d:#175bb0;
+  --blue-soft:#e8f1fc; --blue-tint:#f3f8fe;
+  --bg:#eaeff5; --surface:#ffffff; --surface2:#f5f8fc; --inset:#f0f4f9;
+  --ink:#152439; --muted:#6a7a90; --faint:#90a0b5; --line:#dbe4ef; --line2:#eef3f9;
+  --green:#138a5b; --green-bg:#e3f5ec; --amber:#b9770a; --amber-bg:#fdf2dc; --red:#cf3b3b; --red-bg:#fdeaea;
+  --shadow:0 1px 2px rgba(15,39,71,.04),0 4px 16px rgba(15,39,71,.06);
+  --shadow-l:0 8px 30px rgba(15,39,71,.10);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--ink);font-family:'Manrope',sans-serif;-webkit-font-smoothing:antialiased}
+body{background-image:linear-gradient(180deg,#e7edf4 0%,#eaeff5 240px);min-height:100vh}
+.wrap{max-width:1320px;margin:0 auto;padding:0 22px 80px}
+.mono{font-family:'JetBrains Mono',monospace;font-variant-numeric:tabular-nums}
+
+/* ===== TOPBAR ===== */
+.topbar{background:var(--navy);color:#fff;border-radius:0 0 18px 18px;box-shadow:var(--shadow-l);padding:20px 26px;display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;position:relative;overflow:hidden}
+.topbar::after{content:'';position:absolute;right:-60px;top:-80px;width:320px;height:320px;border-radius:50%;background:radial-gradient(circle,rgba(31,111,214,.30),transparent 65%)}
+.logo{display:flex;align-items:center;gap:13px;z-index:1}
+.inf{font-family:'Sora',sans-serif;font-weight:800;font-size:1.55rem;color:var(--blue);line-height:1;letter-spacing:-.02em}
+.logo .txt{font-family:'Sora',sans-serif;font-weight:700;font-size:1.18rem;letter-spacing:-.01em;line-height:1.05}
+.logo .txt small{display:block;font-family:'Manrope';font-weight:500;font-size:.66rem;letter-spacing:.26em;text-transform:uppercase;color:#9fb6d4;margin-top:5px}
+.topbar .tool{z-index:1;text-align:right}
+.topbar .tool .t{font-family:'Sora';font-weight:600;font-size:.95rem}
+.topbar .tool .s{font-size:.72rem;color:#9fb6d4;margin-top:3px}
+
+/* ===== LAYOUT ===== */
+.section-label{font-family:'Sora';font-weight:700;font-size:.72rem;letter-spacing:.18em;text-transform:uppercase;color:var(--faint);margin:30px 4px 13px;display:flex;align-items:center;gap:10px}
+.section-label::after{content:'';flex:1;height:1px;background:var(--line)}
+.cols{display:grid;grid-template-columns:1.25fr 1fr;gap:18px}
+@media(max-width:900px){.cols{grid-template-columns:1fr}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:15px;box-shadow:var(--shadow);padding:22px}
+.card .ch{display:flex;align-items:center;gap:11px;margin-bottom:5px}
+.card .ic{width:34px;height:34px;border-radius:9px;background:var(--blue-soft);display:grid;place-items:center;flex:none}
+.card .ic svg{width:18px;height:18px;stroke:var(--blue);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.card h2{font-family:'Sora';font-size:1.02rem;font-weight:700;letter-spacing:-.01em}
+.card .hint{color:var(--muted);font-size:.83rem;line-height:1.55;margin:8px 0 16px}
+.card .hint b{color:var(--navy2);font-weight:700}
+.card .hint i{font-style:normal;color:var(--blue-d);font-weight:600}
+
+/* ===== PUXAR / UPLOAD ===== */
+.srcrow{display:flex;gap:9px}
+.srcrow input{flex:1;min-width:0;background:var(--surface2);border:1px solid var(--line);border-radius:10px;padding:12px 13px;color:var(--ink);font-family:'JetBrains Mono';font-size:.76rem}
+.srcrow input:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-soft)}
+.status{margin-top:12px;font-size:.81rem;font-family:'JetBrains Mono';min-height:18px;display:flex;align-items:center;gap:8px}
+.status.ok{color:var(--green)} .status.err{color:var(--red)} .status.load{color:var(--blue-d)}
+.spin{width:13px;height:13px;border:2px solid var(--line);border-top-color:var(--blue);border-radius:50%;animation:sp .7s linear infinite;display:inline-block}
+@keyframes sp{to{transform:rotate(360deg)}}
+details.alt{margin-top:16px;border-top:1px solid var(--line2);padding-top:14px}
+details.alt summary{cursor:pointer;color:var(--muted);font-size:.81rem;list-style:none;user-select:none;font-weight:600}
+details.alt summary::-webkit-details-marker{display:none}
+details.alt summary::before{content:'＋ ';color:var(--blue);font-weight:700}
+details.alt[open] summary::before{content:'－ '}
+details.alt summary:hover{color:var(--blue-d)}
+.drop{margin-top:13px;border:1.5px dashed var(--line);border-radius:12px;padding:22px 18px;text-align:center;cursor:pointer;transition:.18s;background:var(--surface2)}
+.drop:hover,.drop.over{border-color:var(--blue);background:var(--blue-tint)}
+.drop svg{width:26px;height:26px;stroke:var(--blue);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;margin-bottom:7px}
+.drop .big{font-weight:700;font-size:.88rem}
+.drop .small{color:var(--muted);font-size:.75rem;margin-top:4px}
+.drop input{display:none}
+
+/* ===== COTAÇÃO AVULSA ===== */
+.manual{display:grid;gap:12px}
+.fld label{display:block;font-size:.69rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:6px;font-weight:700}
+.fld input{width:100%;background:var(--surface2);border:1px solid var(--line);border-radius:9px;padding:11px 12px;color:var(--ink);font-family:'JetBrains Mono';font-size:.9rem}
+.fld input:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-soft)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.ac{position:relative}
+.aclist{position:absolute;z-index:30;left:0;right:0;top:100%;background:#fff;border:1px solid var(--line);border-top:none;border-radius:0 0 9px 9px;max-height:200px;overflow:auto;box-shadow:var(--shadow-l)}
+.aclist div{padding:9px 12px;font-size:.82rem;cursor:pointer;font-family:'JetBrains Mono';display:flex;justify-content:space-between;gap:10px}
+.aclist div .rg{color:var(--faint);font-size:.72rem}
+.aclist div:hover,.aclist div.sel{background:var(--blue-soft);color:var(--blue-d)}
+.btn{background:var(--blue);color:#fff;border:none;font-family:'Sora';font-weight:700;font-size:.88rem;padding:12px 18px;border-radius:10px;cursor:pointer;transition:.15s;white-space:nowrap;box-shadow:0 2px 8px rgba(31,111,214,.28)}
+.btn:hover{background:var(--blue-d);transform:translateY(-1px)}
+.btn.ghost{background:#fff;border:1px solid var(--line);color:var(--navy2);box-shadow:none}
+.btn.ghost:hover{border-color:var(--blue);color:var(--blue-d);background:var(--blue-tint);transform:none}
+.btn:disabled{opacity:.45;cursor:not-allowed;transform:none}
+.quote{margin-top:15px;background:linear-gradient(135deg,var(--navy),var(--navy2));color:#fff;border-radius:13px;padding:18px;display:none}
+.quote.show{display:block;animation:fade .3s}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}}
+.qtot{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:6px}
+.qtot .lab{font-size:.72rem;text-transform:uppercase;letter-spacing:.14em;color:#9fb6d4}
+.qtot .val{font-family:'JetBrains Mono';font-weight:700;font-size:2.05rem;color:#fff}
+#qmeta{font-size:.8rem;color:#cdd9ea;margin-bottom:12px}
+#qmeta b{color:#fff}
+.qbreak{display:grid;grid-template-columns:1fr 1fr;gap:0 20px;font-size:.79rem;font-family:'JetBrains Mono'}
+.qbreak .l{display:flex;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.1);padding:5px 0;color:#cdd9ea}
+.qbreak .l span:last-child{color:#fff;font-weight:600}
+
+/* ===== TABELA DE PREÇOS (referência) ===== */
+.pricepanel{background:var(--surface);border:1px solid var(--line);border-radius:15px;box-shadow:var(--shadow);overflow:hidden}
+.pp-head{display:flex;align-items:center;gap:11px;padding:16px 20px;cursor:pointer;user-select:none}
+.pp-head .ic{width:30px;height:30px;border-radius:8px;background:var(--blue-soft);display:grid;place-items:center;flex:none}
+.pp-head .ic svg{width:16px;height:16px;stroke:var(--blue);fill:none;stroke-width:2}
+.pp-head h2{font-family:'Sora';font-size:.96rem;font-weight:700;flex:1}
+.pp-head .arr{color:var(--faint);transition:.2s;font-size:.8rem}
+.pricepanel.open .pp-head .arr{transform:rotate(180deg)}
+.pp-body{display:none;border-top:1px solid var(--line2);padding:6px 0}
+.pricepanel.open .pp-body{display:block}
+.ppgrid{display:grid;grid-template-columns:1fr 1fr;gap:0}
+@media(max-width:680px){.ppgrid{grid-template-columns:1fr}}
+.preg{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-bottom:1px solid var(--line2);font-size:.85rem}
+.preg .nm{font-weight:700;color:var(--navy2)}
+.preg .vl{font-family:'JetBrains Mono';font-size:.82rem}
+.preg .vl b{color:var(--blue-d)} .preg .vl .mn{color:var(--muted)}
+.fees{padding:14px 20px;background:var(--inset);display:flex;flex-wrap:wrap;gap:8px}
+.fee{font-family:'JetBrains Mono';font-size:.72rem;background:#fff;border:1px solid var(--line);border-radius:7px;padding:6px 10px;color:var(--muted)}
+.fee b{color:var(--navy2)}
+
+/* ===== RESULTADOS ===== */
+.results{display:none}
+.results.show{display:block;animation:fade .35s}
+.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:16px}
+@media(max-width:780px){.kpis{grid-template-columns:repeat(2,1fr)}}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:13px;box-shadow:var(--shadow);padding:15px 17px}
+.kpi.feat{background:linear-gradient(135deg,var(--blue),var(--blue-d));border:none;color:#fff;box-shadow:0 6px 20px rgba(31,111,214,.3)}
+.kpi .k{font-size:.66rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);font-weight:700}
+.kpi.feat .k{color:#dbe9fb}
+.kpi .v{font-family:'JetBrains Mono';font-weight:700;font-size:1.5rem;margin-top:7px;letter-spacing:-.01em}
+.kpi .sub{font-size:.68rem;color:var(--faint);margin-top:3px;font-family:'JetBrains Mono'}
+.kpi.feat .sub{color:#cfe1f9}
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:13px}
+.toolbar .ttl{font-family:'Sora';font-weight:700;font-size:.95rem;flex:1}
+.toolbar .ttl span{color:var(--faint);font-weight:500;font-size:.82rem}
+.warn{border-radius:12px;padding:13px 16px;margin-bottom:14px;font-size:.83rem;line-height:1.5}
+.warn.red{background:var(--red-bg);border:1px solid #f3c5c5} .warn.red b{color:var(--red)}
+.warn.amb{background:var(--amber-bg);border:1px solid #f0dcae} .warn.amb b{color:var(--amber)}
+.warn .clist{font-family:'JetBrains Mono';font-size:.76rem;color:var(--navy2);margin-top:6px}
+.tablewrap{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.tscroll{overflow:auto;max-height:64vh}
+table{width:100%;border-collapse:collapse;font-size:.82rem}
+thead th{position:sticky;background:var(--navy);color:#cdd9ea;font-family:'Sora';font-weight:600;font-size:.64rem;text-transform:uppercase;letter-spacing:.05em;text-align:right;padding:9px 11px;white-space:nowrap;z-index:6}
+thead tr.grp th{top:0;font-size:.6rem;letter-spacing:.12em;color:#7e97bb;padding:8px 11px;border-bottom:1px solid var(--navy2)}
+thead tr.grp th.gblue{color:#9cc2f3}
+thead tr.cols-h th{top:31px}
+th.l,td.l{text-align:left}
+tbody td{padding:9px 11px;border-bottom:1px solid var(--line2);text-align:right;font-family:'JetBrains Mono';white-space:nowrap;color:var(--ink)}
+tbody tr:nth-child(even){background:var(--surface2)}
+tbody tr:hover{background:var(--blue-tint)}
+td.cli{font-family:'Manrope';font-weight:600;max-width:230px;overflow:hidden;text-overflow:ellipsis}
+td.cid{font-family:'Manrope';color:var(--muted)}
+td.comp{color:var(--muted)}
+td.tot{color:var(--blue-d);font-weight:700}
+tr.bad{background:var(--red-bg)!important}
+tr.bad td{color:var(--red)}
+.tag{display:inline-block;font-family:'JetBrains Mono';font-size:.64rem;padding:2px 8px;border-radius:20px;font-weight:600}
+.tag.kg{background:var(--green-bg);color:var(--green)}
+.tag.min{background:var(--amber-bg);color:var(--amber)}
+.tag.err{background:#fff;color:var(--red);border:1px solid #f3c5c5}
+.rg{display:inline-block;font-family:'JetBrains Mono';font-size:.68rem;padding:2px 8px;border-radius:6px;background:var(--inset);color:var(--navy2);font-weight:600}
+tfoot td{position:sticky;bottom:0;border-top:2px solid var(--navy);background:var(--surface2);font-family:'JetBrains Mono';font-weight:700;padding:13px 11px;z-index:6}
+tfoot .grand{color:var(--blue-d);font-size:1.02rem}
+.empty{padding:50px 20px;text-align:center;color:var(--faint)}
+.empty svg{width:46px;height:46px;stroke:var(--line);fill:none;stroke-width:1.5;margin-bottom:12px}
+.empty .big{font-family:'Sora';font-weight:600;color:var(--muted);font-size:.95rem}
+.empty .small{font-size:.82rem;margin-top:5px}
+
+.foot{text-align:center;color:var(--faint);font-size:.74rem;margin-top:34px;line-height:1.8}
+.foot code{font-family:'JetBrains Mono';color:var(--blue-d);background:var(--surface);padding:1px 6px;border-radius:5px;border:1px solid var(--line)}
+.foot .v{display:inline-block;margin-top:6px;font-family:'JetBrains Mono';color:var(--green);font-size:.72rem}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="topbar">
+  <div class="logo">
+    <span class="inf">∞</span>
+    <div class="txt">Infinity Log<small>Transportes</small></div>
+  </div>
+  <div class="tool">
+    <div class="t">Calculadora de Frete</div>
+    <div class="s">Tabela SP · carga fracionada</div>
+  </div>
+</div>
+
+<!-- ENTRADA -->
+<div class="section-label">1 · Entrada de dados</div>
+<div class="cols">
+  <div class="card">
+    <div class="ch"><span class="ic"><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-6.2-8.6"/><polyline points="21 4 21 10 15 10"/></svg></span>
+      <h2>Puxar da planilha (Grid fox log)</h2></div>
+    <p class="hint">Cole o link <b>CSV publicado</b> da aba Grid fox log e clique <b>Atualizar</b>. No Google Sheets: <i>Arquivo → Compartilhar → Publicar na web → aba "Grid fox log" → CSV</i>.</p>
+    <div class="srcrow">
+      <input id="srcurl" value="https://docs.google.com/spreadsheets/d/e/2PACX-1vSdRBTQW7CTuVS4YfbDsVe1YFb-rv31qNas7vfV8CLQVOUepbk1TDYaVp1o85OIeA/pub?output=csv" placeholder="https://docs.google.com/.../pub?gid=...&single=true&output=csv">
+      <button class="btn" id="btnPull">↻ Atualizar</button>
+    </div>
+    <div class="status" id="srcStatus"></div>
+    <details class="alt">
+      <summary>ou subir um arquivo manualmente (.xlsx / .csv)</summary>
+      <label class="drop" id="drop">
+        <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        <div class="big">Solte o arquivo aqui ou clique</div>
+        <div class="small">lê a aba "Grid fox log" se existir, senão a primeira</div>
+        <input type="file" id="file" accept=".xlsx,.xls,.csv">
+      </label>
+    </details>
+  </div>
+
+  <div class="card">
+    <div class="ch"><span class="ic"><svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="13" y2="16"/></svg></span>
+      <h2>Cotação rápida</h2></div>
+    <p class="hint">Calcule uma carga só, sem subir nada.</p>
+    <div class="manual">
+      <div class="fld ac">
+        <label>Cidade de entrega</label>
+        <input id="mcid" autocomplete="off" placeholder="ex.: Santo André">
+        <div class="aclist" id="aclist" style="display:none"></div>
+      </div>
+      <div class="row2">
+        <div class="fld"><label>Peso (kg)</label><input id="mpeso" type="number" step="0.01" placeholder="0,00"></div>
+        <div class="fld"><label>Valor NF (R$)</label><input id="mvalor" type="number" step="0.01" placeholder="0,00"></div>
+      </div>
+      <button class="btn" id="mcalc">Calcular frete</button>
+    </div>
+    <div class="quote" id="quote">
+      <div class="qtot"><span class="lab">Frete total</span><span class="val" id="qval">—</span></div>
+      <div id="qmeta"></div>
+      <div class="qbreak" id="qbreak"></div>
+    </div>
+  </div>
+</div>
+
+<!-- TABELA DE PRECOS -->
+<div class="section-label">2 · Tabela de preços (referência)</div>
+<div class="pricepanel" id="pp">
+  <div class="pp-head" id="ppHead">
+    <span class="ic"><svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></span>
+    <h2>Valores por região e taxas aplicadas</h2>
+    <span class="arr">▼</span>
+  </div>
+  <div class="pp-body">
+    <div class="ppgrid" id="ppgrid"></div>
+    <div class="fees" id="fees"></div>
+  </div>
+</div>
+
+<!-- RESULTADOS -->
+<div class="section-label">3 · Resultado</div>
+<div class="kpis">
+  <div class="kpi"><div class="k">Cargas</div><div class="v" id="sCount">—</div><div class="sub" id="sCountSub"></div></div>
+  <div class="kpi"><div class="k">Peso total</div><div class="v mono" id="sPeso">—</div></div>
+  <div class="kpi"><div class="k">Valor NF total</div><div class="v mono" id="sValor">—</div></div>
+  <div class="kpi"><div class="k">Frete médio</div><div class="v mono" id="sMedio">—</div><div class="sub" id="sPct"></div></div>
+  <div class="kpi feat"><div class="k">Frete total</div><div class="v mono" id="sFrete">—</div></div>
+</div>
+
+<div id="warnbox"></div>
+
+<div class="toolbar" id="toolbar" style="display:none">
+  <div class="ttl">Detalhamento por carga <span id="srcName"></span></div>
+  <button class="btn ghost" id="exp">Exportar CSV</button>
+</div>
+
+<div class="tablewrap">
+  <div class="tscroll" id="tscroll">
+    <div class="empty" id="empty">
+      <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg>
+      <div class="big">Nenhuma carga calculada ainda</div>
+      <div class="small">Puxe a planilha ou suba um arquivo para ver o frete de cada carga.</div>
+    </div>
+    <table id="tbl" style="display:none">
+      <thead>
+        <tr class="grp">
+          <th class="l" colspan="4">Entrega</th>
+          <th colspan="2">Carga</th>
+          <th class="gblue" colspan="7">Composição do frete</th>
+          <th></th>
+        </tr>
+        <tr class="cols-h">
+          <th class="l">#</th><th class="l">Cliente</th><th class="l">Cidade</th><th class="l">Região</th>
+          <th>Peso</th><th>Valor NF</th>
+          <th>Base</th><th>Frete peso</th><th>GRIS</th><th>Ad Val.</th><th>Pedágio</th><th>CT-e</th><th>Desp.</th>
+          <th>Frete total</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+      <tfoot id="tfoot"></tfoot>
+    </table>
+  </div>
+</div>
+
+<div class="foot">
+  Cálculo idêntico à aba <code>Plan1</code> · Frete peso = máx(Peso × R$/kg, mínimo) · Total = (Frete peso + GRIS + Ad Valorem + Pedágio + CT-e + Despacho) ÷ 0,88 (ICMS 12% por dentro)<br>
+  <span class="v">✓ validado em 147 de 147 cargas · 712 cidades · regras da aba Tabela (nov/2025)</span>
+</div>
+</div>
+
+<script>
+const CMAP = {"AGUAI": "INTERIOR I", "AGUAS DA PRATA": "INTERIOR I", "AGUAS DE LINDOIA": "INTERIOR I", "AGUAS DE SAO PEDRO": "INTERIOR I", "ALAMBARI": "INTERIOR I", "ALFREDO GUEDES": "INTERIOR I", "ALUMINIO": "INTERIOR I", "AMERICANA": "INTERIOR I", "AMPARO": "INTERIOR I", "ANA DIAS": "INTERIOR I", "ANALANDIA": "INTERIOR I", "ANGATUBA": "INTERIOR I", "ANHEMBI": "INTERIOR I", "APARECIDA DE SAO MANUEL": "INTERIOR I", "ARACARIGUAMA": "INTERIOR I", "ARACOIABA DA SERRA": "INTERIOR I", "ARANDU": "INTERIOR I", "ARARAQUARA": "INTERIOR I", "ARARAS": "INTERIOR I", "AREIOPOLIS": "INTERIOR I", "ARTUR NOGUEIRA": "INTERIOR I", "ATIBAIA": "INTERIOR I", "AVARE": "INTERIOR I", "BOFETE": "INTERIOR I", "BOITUVA": "INTERIOR I", "BOM FIM DO BOM JESUS": "INTERIOR I", "BOM JESUS DOS PERDOES": "INTERIOR I", "BOTUCATU": "INTERIOR I", "BRAGANCA PAULISTA": "INTERIOR I", "BROTAS": "INTERIOR I", "BURI": "INTERIOR I", "CABREUVA": "INTERIOR I", "CAJATI": "INTERIOR I", "CAMPINA DO MONTE ALEGRE": "INTERIOR I", "CAMPINAS": "INTERIOR I", "CAMPO LIMPO PAULISTA": "INTERIOR I", "CANANEIA": "INTERIOR I", "CAPAO BONITO": "INTERIOR I", "CAPELA DO ALTO": "INTERIOR I", "CAPIVARI": "INTERIOR I", "CARUARA": "INTERIOR I", "CASA BRANCA": "INTERIOR I", "CERQUILHO": "INTERIOR I", "CESARIO LANGE": "INTERIOR I", "CHARQUEADA": "INTERIOR I", "CONCHAL": "INTERIOR I", "CORDEIROPOLIS": "INTERIOR I", "CORUMBATAI": "INTERIOR I", "COSMOPOLIS": "INTERIOR I", "DESCALVADO": "INTERIOR I", "DIVINOLANDIA": "INTERIOR I", "DOIS CORREGOS": "INTERIOR I", "DOURADO": "INTERIOR I", "ELDORADO": "INTERIOR I", "ELIAS FAUSTO": "INTERIOR I", "ENGENHEIRO COELHO": "INTERIOR I", "ESPIRITO SANTO DO PINHAL": "INTERIOR I", "ESTIVA GERBI": "INTERIOR I", "GUAPIARA": "INTERIOR I", "GUAREI": "INTERIOR I", "HOLAMBRA": "INTERIOR I", "HORTOLANDIA": "INTERIOR I", "IARAS": "INTERIOR I", "IBATE": "INTERIOR I", "IBIUNA": "INTERIOR I", "IGUAPE": "INTERIOR I", "ILHA COMPRIDA": "INTERIOR I", "INDAIATUBA": "INTERIOR I", "IPERO": "INTERIOR I", "IPEUNA": "INTERIOR I", "IRACEMAPOLIS": "INTERIOR I", "ITAPETININGA": "INTERIOR I", "ITAPIRA": "INTERIOR I", "ITATIBA": "INTERIOR I", "ITATINGA": "INTERIOR I", "ITIRAPINA": "INTERIOR I", "ITOBI": "INTERIOR I", "ITU": "INTERIOR I", "ITUPEVA": "INTERIOR I", "JACUPIRANGA": "INTERIOR I", "JAGUARIUNA": "INTERIOR I", "JARINU": "INTERIOR I", "JOANOPOLIS": "INTERIOR I", "JUMIRIM": "INTERIOR I", "JUNDIAI": "INTERIOR I", "LARANJAL PAULISTA": "INTERIOR I", "LEME": "INTERIOR I", "LENCOIS PAULISTA": "INTERIOR I", "LIMEIRA": "INTERIOR I", "LINDOIA": "INTERIOR I", "LOUVEIRA": "INTERIOR I", "LUIS ANTONIO": "INTERIOR I", "MAIRINQUE": "INTERIOR I", "MINEIROS DO TIETE": "INTERIOR I", "MOCOCA": "INTERIOR I", "MOGI GUACU": "INTERIOR I", "MOGI MIRIM": "INTERIOR I", "MOMBUCA": "INTERIOR I", "MONTE ALEGRE DO SUL": "INTERIOR I", "MONTE MOR": "INTERIOR I", "MORUNGABA": "INTERIOR I", "NAZARE PAULISTA": "INTERIOR I", "NOVA ODESSA": "INTERIOR I", "PARANAPANEMA": "INTERIOR I", "PARDINHO": "INTERIOR I", "PARIQUERA-ACU": "INTERIOR I", "PAULINIA": "INTERIOR I", "PEDRA BELA": "INTERIOR I", "PEDREIRA": "INTERIOR I", "PEDRO BARROS": "INTERIOR I", "PEREIRAS": "INTERIOR I", "PIEDADE": "INTERIOR I", "PILAR DO SUL": "INTERIOR I", "PINHALZINHO": "INTERIOR I", "PIRACAIA": "INTERIOR I", "PIRACICABA": "INTERIOR I", "PIRASSUNUNGA": "INTERIOR I", "PORANGABA": "INTERIOR I", "PORTO FELIZ": "INTERIOR I", "PORTO FERREIRA": "INTERIOR I", "PRATANIA": "INTERIOR I", "QUADRA": "INTERIOR I", "RAFARD": "INTERIOR I", "REGISTRO": "INTERIOR I", "RIBEIRAO BONITO": "INTERIOR I", "RIBEIRAO GRANDE": "INTERIOR I", "RIO CLARO": "INTERIOR I", "RIO DAS PEDRAS": "INTERIOR I", "RUBIAO JUNIOR": "INTERIOR I", "SALTINHO": "INTERIOR I", "SALTO": "INTERIOR I", "SALTO DE PIRAPORA": "INTERIOR I", "SANTA BARBARA D OESTE": "INTERIOR I", "SANTA CRUZ DA CONCEICAO": "INTERIOR I", "SANTA CRUZ DAS PALMEIRAS": "INTERIOR I", "SANTA GERTRUDES": "INTERIOR I", "SANTA MARIA DA SERRA": "INTERIOR I", "SANTA RITA DO PASSA QUATRO": "INTERIOR I", "SANTO ANTONIO DE POSSE": "INTERIOR I", "SANTO ANTONIO DO JARDIM": "INTERIOR I", "SAO BENEDITO DAS AREIAS": "INTERIOR I", "SAO CARLOS": "INTERIOR I", "SAO FRANCISCO XAVIER": "INTERIOR I", "SAO JOAO DA BOA VISTA": "INTERIOR I", "SAO JOSE DO RIO PARDO": "INTERIOR I", "SAO MANUEL": "INTERIOR I", "SAO MIGUEL ARCANJO": "INTERIOR I", "SAO PEDRO": "INTERIOR I", "SAO ROQUE": "INTERIOR I", "SAO SEBASTIAO DA GRAMA": "INTERIOR I", "SAO SIMAO": "INTERIOR I", "SARAPUI": "INTERIOR I", "SERRA NEGRA": "INTERIOR I", "SETE BARRAS": "INTERIOR I", "SOCORRO": "INTERIOR I", "SOROCABA": "INTERIOR I", "SUMARE": "INTERIOR I", "TAMBAU": "INTERIOR I", "TAPIRAI": "INTERIOR I", "TAPIRATIBA": "INTERIOR I", "TAQUARIVAI": "INTERIOR I", "TATUI": "INTERIOR I", "TIETE": "INTERIOR I", "TORRE DE PEDRA": "INTERIOR I", "TORRINHA": "INTERIOR I", "TRABIJU": "INTERIOR I", "TUIUTI": "INTERIOR I", "VALINHOS": "INTERIOR I", "VARGEM": "INTERIOR I", "VARGEM GRANDE DO SUL": "INTERIOR I", "VARZEA PAULISTA": "INTERIOR I", "VINHEDO": "INTERIOR I", "VOTORANTIM": "INTERIOR I", "CONCHAS": "INTERIOR I", "ITARIRI": "INTERIOR I", "JUQUIA": "INTERIOR I", "MIRACATU": "INTERIOR I", "PEDRO DE TOLEDO": "INTERIOR I", "ADOLFO": "INTERIOR II", "AGUAS DE SANTA BARBARA": "INTERIOR II", "AGUDOS": "INTERIOR II", "AGULHA": "INTERIOR II", "ALTAIR": "INTERIOR II", "ALTINOPOLIS": "INTERIOR II", "ALTO PORA": "INTERIOR II", "ALVARO DE CARVALHO": "INTERIOR II", "ALVINLANDIA": "INTERIOR II", "AMADEU AMARAL": "INTERIOR II", "AMERICO BRASILIENSE": "INTERIOR II", "APIAI": "INTERIOR II", "ARAMINA": "INTERIOR II", "AREALVA": "INTERIOR II", "ARIRANHA": "INTERIOR II", "ASSIS": "INTERIOR II", "AVAI": "INTERIOR II", "AVANHANDAVA": "INTERIOR II", "AVENCAS": "INTERIOR II", "BADY BASSITT": "INTERIOR II", "BALBINOS": "INTERIOR II", "BALSAMO": "INTERIOR II", "BARAO DE ANTONINA": "INTERIOR II", "BARIRI": "INTERIOR II", "BARRA BONITA": "INTERIOR II", "BARRA DO CHAPEU": "INTERIOR II", "BARRA DO TURVO": "INTERIOR II", "BARRETOS": "INTERIOR II", "BARRINHA": "INTERIOR II", "BATATAIS": "INTERIOR II", "BAURU": "INTERIOR II", "BEBEDOURO": "INTERIOR II", "BERNARDINO DE CAMPOS": "INTERIOR II", "BOA ESPERANCA DO SUL": "INTERIOR II", "BOCAINA": "INTERIOR II", "BOM SUCESSO DE ITARARE": "INTERIOR II", "BORA": "INTERIOR II", "BORACEIA": "INTERIOR II", "BORBOREMA": "INTERIOR II", "BOREBI": "INTERIOR II", "BOTAFOGO": "INTERIOR II", "BRODOWSKI": "INTERIOR II", "BURITIZAL": "INTERIOR II", "CABRALIA PAULISTA": "INTERIOR II", "CACONDE": "INTERIOR II", "CAFELANDIA": "INTERIOR II", "CAJOBI": "INTERIOR II", "CAJURU": "INTERIOR II", "CAMPOS NOVOS PAULISTA": "INTERIOR II", "CANDIDO MOTA": "INTERIOR II", "CANDIDO RODRIGUES": "INTERIOR II", "CANITAR": "INTERIOR II", "CASSIA DOS COQUEIROS": "INTERIOR II", "CATANDUVA": "INTERIOR II", "CATIGUA": "INTERIOR II", "CEDRAL": "INTERIOR II", "CERQUEIRA CESAR": "INTERIOR II", "CHAVANTES": "INTERIOR II", "COLINA": "INTERIOR II", "COLOMBIA": "INTERIOR II", "CONCEICAO DE MONTE ALEGRE": "INTERIOR II", "CORONEL MACEDO": "INTERIOR II", "CRAVINHOS": "INTERIOR II", "CRISTAIS PAULISTA": "INTERIOR II", "CRUZALIA": "INTERIOR II", "DOBRADA": "INTERIOR II", "DOMELIA": "INTERIOR II", "DUARTINA": "INTERIOR II", "DUMONT": "INTERIOR II", "ECHAPORA": "INTERIOR II", "ELISIARIO": "INTERIOR II", "EMBAUBA": "INTERIOR II", "ENGENHEIRO SCHMIDT": "INTERIOR II", "ESPIRITO SANTO DO TURVO": "INTERIOR II", "FARTURA": "INTERIOR II", "FERNANDO PRESTES": "INTERIOR II", "FERNAO": "INTERIOR II", "FLORINEA": "INTERIOR II", "FRANCA": "INTERIOR II", "FRUTAL DO CAMPO": "INTERIOR II", "GALIA": "INTERIOR II", "GARCA": "INTERIOR II", "GAVIAO PEIXOTO": "INTERIOR II", "GETULINA": "INTERIOR II", "GUAIANAS": "INTERIOR II", "GUAICARA": "INTERIOR II", "GUAIMBE": "INTERIOR II", "GUAIRA": "INTERIOR II", "GUAPIACU": "INTERIOR II", "GUARA": "INTERIOR II", "GUARACI": "INTERIOR II", "GUARANTA": "INTERIOR II", "GUARIBA": "INTERIOR II", "GUARIROBA": "INTERIOR II", "GUATAPARA": "INTERIOR II", "IACANGA": "INTERIOR II", "IBIRA": "INTERIOR II", "IBIRAREMA": "INTERIOR II", "IBITINGA": "INTERIOR II", "IBITIUVA": "INTERIOR II", "IGACABA": "INTERIOR II", "IGARACU DO TIETE": "INTERIOR II", "IGARAI": "INTERIOR II", "IGARAPAVA": "INTERIOR II", "IPAUSSU": "INTERIOR II", "IPIGUA": "INTERIOR II", "IPORANGA": "INTERIOR II", "IPUA": "INTERIOR II", "IRAPUA": "INTERIOR II", "ITABERA": "INTERIOR II", "ITAI": "INTERIOR II", "ITAJOBI": "INTERIOR II", "ITAJU": "INTERIOR II", "ITAOCA": "INTERIOR II", "ITAPEVA": "INTERIOR II", "ITAPIRAPUA PAULISTA": "INTERIOR II", "ITAPOLIS": "INTERIOR II", "ITAPORANGA": "INTERIOR II", "ITAPUI": "INTERIOR II", "ITARARE": "INTERIOR II", "ITIRAPUA": "INTERIOR II", "ITUVERAVA": "INTERIOR II", "JABORANDI": "INTERIOR II", "JABOTICABAL": "INTERIOR II", "JACI": "INTERIOR II", "JACUBA": "INTERIOR II", "JAFA": "INTERIOR II", "JARDINOPOLIS": "INTERIOR II", "JAU": "INTERIOR II", "JERIQUARA": "INTERIOR II", "JOSE BONIFACIO": "INTERIOR II", "JULIO MESQUITA": "INTERIOR II", "JURUCE": "INTERIOR II", "LINS": "INTERIOR II", "LUCIANOPOLIS": "INTERIOR II", "LUPERCIO": "INTERIOR II", "LUTECIA": "INTERIOR II", "MACATUBA": "INTERIOR II", "MANDURI": "INTERIOR II", "MARACAI": "INTERIOR II", "MARAPOAMA": "INTERIOR II", "MARCONDESIA": "INTERIOR II", "MARILIA": "INTERIOR II", "MATAO": "INTERIOR II", "MENDONCA": "INTERIOR II", "MIGUELOPOLIS": "INTERIOR II", "MIRASSOL": "INTERIOR II", "MIRASSOLANDIA": "INTERIOR II", "MONTE ALTO": "INTERIOR II", "MONTE APRAZIVEL": "INTERIOR II", "MONTE AZUL PAULISTA": "INTERIOR II", "MONTE VERDE PAULISTA": "INTERIOR II", "MORRO AGUDO": "INTERIOR II", "MOTUCA": "INTERIOR II", "NEVES PAULISTA": "INTERIOR II", "NOVA ALIANCA": "INTERIOR II", "NOVA CAMPINA": "INTERIOR II", "NOVA EUROPA": "INTERIOR II", "NOVA GRANADA": "INTERIOR II", "NOVA ITAPIREMA": "INTERIOR II", "NOVAIS": "INTERIOR II", "NOVO HORIZONTE": "INTERIOR II", "NUPORANGA": "INTERIOR II", "OCAUCU": "INTERIOR II", "OLEO": "INTERIOR II", "OLIMPIA": "INTERIOR II", "ONDA VERDE": "INTERIOR II", "ORIENTE": "INTERIOR II", "ORLANDIA": "INTERIOR II", "OSCAR BRESSANE": "INTERIOR II", "OURINHOS": "INTERIOR II", "PADRE NOBREGA": "INTERIOR II", "PALMARES PAULISTA": "INTERIOR II", "PALMITAL": "INTERIOR II", "PARAGUACU PAULISTA": "INTERIOR II", "PARAISO": "INTERIOR II", "PATROCINIO PAULISTA": "INTERIOR II", "PAULISTANIA": "INTERIOR II", "PEDERNEIRAS": "INTERIOR II", "PEDREGULHO": "INTERIOR II", "PEDRINHAS PAULISTA": "INTERIOR II", "PENAPOLIS": "INTERIOR II", "PINDORAMA": "INTERIOR II", "PIONEIROS": "INTERIOR II", "PIRAJU": "INTERIOR II", "PIRAJUI": "INTERIOR II", "PIRANGI": "INTERIOR II", "PIRATININGA": "INTERIOR II", "PITANGUEIRAS": "INTERIOR II", "PLATINA": "INTERIOR II", "POMPEIA": "INTERIOR II", "PONGAI": "INTERIOR II", "PONTAL": "INTERIOR II", "POTIRENDABA": "INTERIOR II", "POTUNDUVA": "INTERIOR II", "PRADOPOLIS": "INTERIOR II", "PRESIDENTE ALVES": "INTERIOR II", "PROMISSAO": "INTERIOR II", "QUINTANA": "INTERIOR II", "REGINOPOLIS": "INTERIOR II", "RESTINGA": "INTERIOR II", "RIBEIRA": "INTERIOR II", "RIBEIRAO BRANCO": "INTERIOR II", "RIBEIRAO CORRENTE": "INTERIOR II", "RIBEIRAO DO SUL": "INTERIOR II", "RIBEIRAO PRETO": "INTERIOR II", "RIFAINA": "INTERIOR II", "RINCAO": "INTERIOR II", "RIVERSUL": "INTERIOR II", "SABINO": "INTERIOR II", "SALES": "INTERIOR II", "SALES OLIVEIRA": "INTERIOR II", "SALTO GRANDE": "INTERIOR II", "SANTA ADELIA": "INTERIOR II", "SANTA CRUZ DA ESPERANCA": "INTERIOR II", "SANTA CRUZ DO RIO PARDO": "INTERIOR II", "SANTA ERNESTINA": "INTERIOR II", "SANTA LUCIA": "INTERIOR II", "SANTA ROSA DE VITERBO": "INTERIOR II", "SANTELMO": "INTERIOR II", "SANTO ANTONIO DA ALEGRIA": "INTERIOR II", "SAO BENEDITO DA CACHOEIRINHA": "INTERIOR II", "SAO JOAQUIM DA BARRA": "INTERIOR II", "SAO JOSE DA BELA VISTA": "INTERIOR II", "SAO JOSE DAS LARANJEIRAS": "INTERIOR II", "SAO JOSE DO RIO PRETO": "INTERIOR II", "SAO LOURENCO DO TURVO": "INTERIOR II", "SAO PEDRO DO TURVO": "INTERIOR II", "SARUTAIA": "INTERIOR II", "SERRA AZUL": "INTERIOR II", "SERRANA": "INTERIOR II", "SERTAOZINHO": "INTERIOR II", "SEVERINIA": "INTERIOR II", "SUSSUI": "INTERIOR II", "TABAPUA": "INTERIOR II", "TABATINGA": "INTERIOR II", "TAGUAI": "INTERIOR II", "TAIACU": "INTERIOR II", "TAIUVA": "INTERIOR II", "TALHADO": "INTERIOR II", "TANABI": "INTERIOR II", "TAQUARAL": "INTERIOR II", "TAQUARITINGA": "INTERIOR II", "TAQUARITUBA": "INTERIOR II", "TARUMA": "INTERIOR II", "TEJUPA": "INTERIOR II", "TERRA ROXA": "INTERIOR II", "TIMBURI": "INTERIOR II", "UBARANA": "INTERIOR II", "UBIRAJARA": "INTERIOR II", "UCHOA": "INTERIOR II", "URU": "INTERIOR II", "URUPES": "INTERIOR II", "VANGLORIA": "INTERIOR II", "VERA CRUZ": "INTERIOR II", "VIRADOURO": "INTERIOR II", "VISTA ALEGRE DO ALTO": "INTERIOR II", "ADAMANTINA": "INTERIOR III", "ALFREDO MARCONDES": "INTERIOR III", "ALTO ALEGRE": "INTERIOR III", "ALVARES FLORENCE": "INTERIOR III", "ALVARES MACHADO": "INTERIOR III", "AMELIOPOLIS": "INTERIOR III", "AMERICO DE CAMPOS": "INTERIOR III", "ANDRADINA": "INTERIOR III", "ANHUMAS": "INTERIOR III", "APARECIDA D OESTE": "INTERIOR III", "ARACATUBA": "INTERIOR III", "ARAXAS": "INTERIOR III", "ARCO-IRIS": "INTERIOR III", "ASPASIA": "INTERIOR III", "ATLANTIDA": "INTERIOR III", "AURIFLAMA": "INTERIOR III", "BARBOSA": "INTERIOR III", "BASTOS": "INTERIOR III", "BENTO DE ABREU": "INTERIOR III", "BILAC": "INTERIOR III", "BIRIGUI": "INTERIOR III", "BRAUNA": "INTERIOR III", "BREJO ALEGRE": "INTERIOR III", "BURITAMA": "INTERIOR III", "CAIABU": "INTERIOR III", "CAIUA": "INTERIOR III", "CAMPINAL": "INTERIOR III", "CARDOSO": "INTERIOR III", "CASTILHO": "INTERIOR III", "CLEMENTINA": "INTERIOR III", "COROADOS": "INTERIOR III", "CORONEL GOULART": "INTERIOR III", "COSMORAMA": "INTERIOR III", "COSTA MACHADO": "INTERIOR III", "CUIABA PAULISTA": "INTERIOR III", "DIRCE REIS": "INTERIOR III", "DOLCINOPOLIS": "INTERIOR III", "DRACENA": "INTERIOR III", "EMILIANOPOLIS": "INTERIOR III", "ENEIDA": "INTERIOR III", "ESPERANCA DOESTE": "INTERIOR III", "ESPIGAO": "INTERIOR III", "ESTRELA D OESTE": "INTERIOR III", "ESTRELA DO NORTE": "INTERIOR III", "EUCLIDES DA CUNHA PAULISTA": "INTERIOR III", "FERNANDOPOLIS": "INTERIOR III", "FLORA RICA": "INTERIOR III", "FLOREAL": "INTERIOR III", "FLORESTA DO SUL": "INTERIOR III", "FLORIDA PAULISTA": "INTERIOR III", "GABRIEL MONTEIRO": "INTERIOR III", "GARDENIA": "INTERIOR III", "GASTAO VIDIGAL": "INTERIOR III", "GENERAL SALGADO": "INTERIOR III", "GLICERIO": "INTERIOR III", "GUARACAI": "INTERIOR III", "GUARACIABA DOESTE": "INTERIOR III", "GUARANI D OESTE": "INTERIOR III", "GUARARAPES": "INTERIOR III", "GUZOLANDIA": "INTERIOR III", "HERCULANDIA": "INTERIOR III", "IACRI": "INTERIOR III", "ICEM": "INTERIOR III", "IEPE": "INTERIOR III", "ILHA SOLTEIRA": "INTERIOR III", "INDAIA DO AGUAPEI": "INTERIOR III", "INDIANA": "INTERIOR III", "INDIAPORA": "INTERIOR III", "INUBIA PAULISTA": "INTERIOR III", "IRAPURU": "INTERIOR III", "ITAPURA": "INTERIOR III", "ITORORO DO PARANAPANEMA": "INTERIOR III", "IUBATINGA": "INTERIOR III", "JACIPORA": "INTERIOR III", "JALES": "INTERIOR III", "JAMAICA": "INTERIOR III", "JATOBA": "INTERIOR III", "JOAO RAMALHO": "INTERIOR III", "JUNQUEIROPOLIS": "INTERIOR III", "LAGOA AZUL": "INTERIOR III", "LAVINIA": "INTERIOR III", "LOURDES": "INTERIOR III", "LUCELIA": "INTERIOR III", "LUIZIANIA": "INTERIOR III", "MACAUBAL": "INTERIOR III", "MACEDONIA": "INTERIOR III", "MAGDA": "INTERIOR III", "MARABA PAULISTA": "INTERIOR III", "MARIAPOLIS": "INTERIOR III", "MARINOPOLIS": "INTERIOR III", "MARTINOPOLIS": "INTERIOR III", "MERIDIANO": "INTERIOR III", "MESOPOLIS": "INTERIOR III", "MIRA ESTRELA": "INTERIOR III", "MIRANDOPOLIS": "INTERIOR III", "MIRANTE DO PARANAPANEMA": "INTERIOR III", "MONCOES": "INTERIOR III", "MONTALVAO": "INTERIOR III", "MONTE CASTELO": "INTERIOR III", "MURUTINGA DO SUL": "INTERIOR III", "NANTES": "INTERIOR III", "NARANDIBA": "INTERIOR III", "NHANDEARA": "INTERIOR III", "NIPOA": "INTERIOR III", "NOVA CANAA PAULISTA": "INTERIOR III", "NOVA CASTILHO": "INTERIOR III", "NOVA GUATAPORANGA": "INTERIOR III", "NOVA INDEPENDENCIA": "INTERIOR III", "NOVA LUZITANIA": "INTERIOR III", "NOVA PATRIA": "INTERIOR III", "OASIS": "INTERIOR III", "ORINDIUVA": "INTERIOR III", "OSVALDO CRUZ": "INTERIOR III", "OURO VERDE": "INTERIOR III", "OUROESTE": "INTERIOR III", "PACAEMBU": "INTERIOR III", "PALESTINA": "INTERIOR III", "PALMEIRA D OESTE": "INTERIOR III", "PANORAMA": "INTERIOR III", "PARANAPUA": "INTERIOR III", "PARAPUA": "INTERIOR III", "PARISI": "INTERIOR III", "PAULICEIA": "INTERIOR III", "PAULO DE FARIA": "INTERIOR III", "PEDRANOPOLIS": "INTERIOR III", "PEREIRA BARRETO": "INTERIOR III", "PIACATU": "INTERIOR III", "PIQUEROBI": "INTERIOR III", "PIRAPOZINHO": "INTERIOR III", "PLANALTO": "INTERIOR III", "PLANALTO DO SUL": "INTERIOR III", "POLONI": "INTERIOR III", "PONTALINDA": "INTERIOR III", "PONTES GESTAL": "INTERIOR III", "POPULINA": "INTERIOR III", "PRACINHA": "INTERIOR III", "PRESIDENTE BERNARDES": "INTERIOR III", "PRESIDENTE EPITACIO": "INTERIOR III", "PRESIDENTE PRUDENTE": "INTERIOR III", "PRESIDENTE VENCESLAU": "INTERIOR III", "PRIMAVERA": "INTERIOR III", "QUATA": "INTERIOR III", "QUEIROZ": "INTERIOR III", "RANCHARIA": "INTERIOR III", "REGENTE FEIJO": "INTERIOR III", "RIBEIRAO DOS INDIOS": "INTERIOR III", "RINOPOLIS": "INTERIOR III", "RIOLANDIA": "INTERIOR III", "ROSANA": "INTERIOR III", "RUBIACEA": "INTERIOR III", "RUBINEIA": "INTERIOR III", "SAGRES": "INTERIOR III", "SALMOURAO": "INTERIOR III", "SANDOVALINA": "INTERIOR III", "SANTA ALBERTINA": "INTERIOR III", "SANTA CLARA D OESTE": "INTERIOR III", "SANTA FE DO SUL": "INTERIOR III", "SANTA MERCEDES": "INTERIOR III", "SANTA RITA D OESTE": "INTERIOR III", "SANTA SALETE": "INTERIOR III", "SANTANA DA PONTE PENSA": "INTERIOR III", "SANTO ANASTACIO": "INTERIOR III", "SANTO ANTONIO DO ARACANGUA": "INTERIOR III", "SANTO EXPEDITO": "INTERIOR III", "SANTOPOLIS DO AGUAPEI": "INTERIOR III", "SAO FRANCISCO": "INTERIOR III", "SAO JOAO DAS DUAS PONTES": "INTERIOR III", "SAO JOAO DE IRACEMA": "INTERIOR III", "SAO JOAO DO PAU D ALHO": "INTERIOR III", "SEBASTIANOPOLIS DO SUL": "INTERIOR III", "SIMONSEN": "INTERIOR III", "SUD MENNUCCI": "INTERIOR III", "SUZANAPOLIS": "INTERIOR III", "TACIBA": "INTERIOR III", "TARABAI": "INTERIOR III", "TECAINDA": "INTERIOR III", "TEODORO SAMPAIO": "INTERIOR III", "TRES FRONTEIRAS": "INTERIOR III", "TUPA": "INTERIOR III", "TUPI PAULISTA": "INTERIOR III", "TURIUBA": "INTERIOR III", "TURMALINA": "INTERIOR III", "UNIAO PAULISTA": "INTERIOR III", "URANIA": "INTERIOR III", "VALENTIM GENTIL": "INTERIOR III", "VALPARAISO": "INTERIOR III", "VARPA": "INTERIOR III", "VITORIA BRASIL": "INTERIOR III", "VOTUPORANGA": "INTERIOR III", "ZACARIAS": "INTERIOR III", "UBATUBA": "LITORAL NORTE", "BERTIOGA": "LITORAL NORTE", "CARAGUATATUBA": "LITORAL NORTE", "ILHABELA": "LITORAL NORTE", "SAO SEBASTIAO": "LITORAL NORTE", "CUBATAO": "LITORAL SUL", "GUARUJA": "LITORAL SUL", "ITANHAEM": "LITORAL SUL", "MONGAGUA": "LITORAL SUL", "PERUIBE": "LITORAL SUL", "PRAIA GRANDE": "LITORAL SUL", "SANTOS": "LITORAL SUL", "SAO VICENTE": "LITORAL SUL", "ARUJA": "METROPOLITANA", "BARUERI": "METROPOLITANA", "BIRITIBA MIRIM": "METROPOLITANA", "CAIEIRAS": "METROPOLITANA", "CAJAMAR": "METROPOLITANA", "CARAPICUIBA": "METROPOLITANA", "COTIA": "METROPOLITANA", "DIADEMA": "METROPOLITANA", "EMBU DAS ARTES": "METROPOLITANA", "EMBU-GUACU": "METROPOLITANA", "FERRAZ DE VASCONCELOS": "METROPOLITANA", "FRANCISCO MORATO": "METROPOLITANA", "FRANCO DA ROCHA": "METROPOLITANA", "GUARAREMA": "METROPOLITANA", "GUARULHOS": "METROPOLITANA", "ITAPECERICA DA SERRA": "METROPOLITANA", "ITAPEVI": "METROPOLITANA", "ITAQUAQUECETUBA": "METROPOLITANA", "JANDIRA": "METROPOLITANA", "JUQUITIBA": "METROPOLITANA", "MAIRIPORA": "METROPOLITANA", "MAUA": "METROPOLITANA", "MOGI DAS CRUZES": "METROPOLITANA", "OSASCO": "METROPOLITANA", "PIRAPORA DO BOM JESUS": "METROPOLITANA", "POA": "METROPOLITANA", "RIBEIRAO PIRES": "METROPOLITANA", "RIO GRANDE DA SERRA": "METROPOLITANA", "SALESOPOLIS": "METROPOLITANA", "SANTA ISABEL": "METROPOLITANA", "SANTANA DE PARNAIBA": "METROPOLITANA", "SANTO ANDRE": "METROPOLITANA", "SAO BERNARDO DO CAMPO": "METROPOLITANA", "SAO CAETANO DO SUL": "METROPOLITANA", "SAO LOURENCO DA SERRA": "METROPOLITANA", "SAO PAULO": "METROPOLITANA", "SUZANO": "METROPOLITANA", "TABOAO DA SERRA": "METROPOLITANA", "VARGEM GRANDE PAULISTA": "METROPOLITANA", "ARAPEI": "VALE DO PARAIBA", "AREIAS": "VALE DO PARAIBA", "CRUZEIRO": "VALE DO PARAIBA", "CUNHA": "VALE DO PARAIBA", "LAVRINHAS": "VALE DO PARAIBA", "QUELUZ": "VALE DO PARAIBA", "SAO JOSE DO BARREIRO": "VALE DO PARAIBA", "SILVEIRAS": "VALE DO PARAIBA", "APARECIDA": "VALE DO PARAIBA", "CACAPAVA": "VALE DO PARAIBA", "CACHOEIRA PAULISTA": "VALE DO PARAIBA", "CAMPOS DO JORDAO": "VALE DO PARAIBA", "CANAS": "VALE DO PARAIBA", "GUARATINGUETA": "VALE DO PARAIBA", "IGARATA": "VALE DO PARAIBA", "JACAREI": "VALE DO PARAIBA", "JAMBEIRO": "VALE DO PARAIBA", "LAGOINHA": "VALE DO PARAIBA", "LORENA": "VALE DO PARAIBA", "MONTEIRO LOBATO": "VALE DO PARAIBA", "NATIVIDADE DA SERRA": "VALE DO PARAIBA", "PARAIBUNA": "VALE DO PARAIBA", "PINDAMONHANGABA": "VALE DO PARAIBA", "PIQUETE": "VALE DO PARAIBA", "POTIM": "VALE DO PARAIBA", "REDENCAO DA SERRA": "VALE DO PARAIBA", "ROSEIRA": "VALE DO PARAIBA", "SANTA BRANCA": "VALE DO PARAIBA", "SANTO ANTONIO DO PINHAL": "VALE DO PARAIBA", "SAO BENTO DO SAPUCAI": "VALE DO PARAIBA", "SAO JOSE DOS CAMPOS": "VALE DO PARAIBA", "SAO LUIZ DO PARAITINGA": "VALE DO PARAIBA", "TAUBATE": "VALE DO PARAIBA", "TREMEMBE": "VALE DO PARAIBA", "BANANAL": "VALE DO PARAIBA"};
+const TABELA = {"METROPOLITANA": {"rate": 0.55, "min": 50.0}, "INTERIOR I": {"rate": 0.7, "min": 60.0}, "INTERIOR II": {"rate": 0.78, "min": 78.0}, "INTERIOR III": {"rate": 0.95, "min": 90.0}, "LITORAL SUL": {"rate": 0.78, "min": 80.0}, "LITORAL NORTE": {"rate": 0.82, "min": 80.0}, "VALE DO PARAIBA": {"rate": 0.7, "min": 60.0}};
+const FEE = {cte:10, adval:0.0025, gris:0.0015, pedagio:8.85, despacho:14.90, icms:0.12};
+const REG_ORDER=['METROPOLITANA','INTERIOR I','INTERIOR II','INTERIOR III','LITORAL SUL','LITORAL NORTE','VALE DO PARAIBA'];
+
+function norm(s){ if(s==null) return ''; s=String(s).trim().toUpperCase();
+  s=s.normalize('NFD').replace(/[\u0300-\u036f]/g,''); return s.replace(/\s+/g,' '); }
+const BRL = n => 'R$ '+n.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+const NUM = n => n.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+function toNum(v){ if(v==null) return 0; if(typeof v==='number') return v;
+  let s=String(v).trim().replace(/\s/g,'').replace(/R\$/i,'');
+  if(s.indexOf(',')>-1){ s=s.replace(/\./g,'').replace(',','.'); }
+  const n=parseFloat(s); return isNaN(n)?0:n; }
+
+function calc(cidade, peso, valor){
+  peso=toNum(peso); valor=toNum(valor);
+  const regiao=CMAP[norm(cidade)];
+  if(!regiao) return {ok:false, cidade, regiao:null};
+  const t=TABELA[regiao];
+  const fk=peso*t.rate, usouMin=fk<t.min, fretePeso=usouMin?t.min:fk;
+  const gris=valor*FEE.gris, adval=valor*FEE.adval, pedagio=Math.ceil(peso/100)*FEE.pedagio;
+  const sub=fretePeso+gris+adval+pedagio+FEE.cte+FEE.despacho;
+  const total=sub/(1-FEE.icms), icms=total*FEE.icms;
+  return {ok:true,cidade,regiao,peso,valor,rate:t.rate,min:t.min,base:usouMin?'Mínimo':'Frete/kg',
+    fretePeso,gris,adval,pedagio,cte:FEE.cte,despacho:FEE.despacho,icms,total};
+}
+
+/* tabela de preços */
+(function(){
+  const g=document.getElementById('ppgrid');
+  REG_ORDER.forEach(r=>{const t=TABELA[r]; if(!t)return;
+    const d=document.createElement('div'); d.className='preg';
+    d.innerHTML='<span class="nm">'+r+'</span><span class="vl"><b>R$ '+NUM(t.rate)+'</b>/kg <span class="mn">· mín '+BRL(t.min)+'</span></span>';
+    g.appendChild(d);});
+  document.getElementById('fees').innerHTML=[
+    ['GRIS','0,15% do valor'],['Ad Valorem','0,25% do valor'],['Pedágio','R$ 8,85 / 100 kg'],
+    ['Taxa CT-e','R$ 10,00'],['Despacho','R$ 14,90'],['ICMS','12% (por dentro)']
+  ].map(([k,v])=>'<span class="fee"><b>'+k+'</b> · '+v+'</span>').join('');
+  document.getElementById('ppHead').onclick=()=>document.getElementById('pp').classList.toggle('open');
+})();
+
+/* cotação avulsa */
+const mcid=document.getElementById('mcid'), aclist=document.getElementById('aclist');
+const CITIES=Object.keys(CMAP).sort(); let acSel=-1, acItems=[];
+mcid.addEventListener('input',()=>{const q=norm(mcid.value);aclist.innerHTML='';acSel=-1;
+  if(!q){aclist.style.display='none';return;}
+  acItems=CITIES.filter(c=>c.includes(q)).slice(0,8);
+  if(!acItems.length){aclist.style.display='none';return;}
+  acItems.forEach(c=>{const d=document.createElement('div');
+    d.innerHTML='<span>'+c+'</span><span class="rg">'+CMAP[c]+'</span>';
+    d.onclick=()=>{mcid.value=c;aclist.style.display='none';};aclist.appendChild(d);});
+  aclist.style.display='block';});
+mcid.addEventListener('keydown',e=>{const ds=aclist.querySelectorAll('div');if(!ds.length)return;
+  if(e.key==='ArrowDown'){acSel=(acSel+1)%ds.length;e.preventDefault();}
+  else if(e.key==='ArrowUp'){acSel=(acSel-1+ds.length)%ds.length;e.preventDefault();}
+  else if(e.key==='Enter'){if(acSel>=0){mcid.value=acItems[acSel];aclist.style.display='none';e.preventDefault();}return;}
+  else return; ds.forEach((d,i)=>d.classList.toggle('sel',i===acSel));});
+document.addEventListener('click',e=>{if(!e.target.closest('.ac'))aclist.style.display='none';});
+document.getElementById('mcalc').onclick=()=>{
+  const r=calc(mcid.value,document.getElementById('mpeso').value,document.getElementById('mvalor').value);
+  const q=document.getElementById('quote'); q.classList.add('show');
+  if(!r.ok){document.getElementById('qval').textContent='—';
+    document.getElementById('qmeta').innerHTML='<span class="tag err">CIDADE NÃO ATENDIDA</span> &nbsp;"'+(mcid.value||'')+'" não está na lista.';
+    document.getElementById('qbreak').innerHTML='';return;}
+  document.getElementById('qval').textContent=BRL(r.total);
+  document.getElementById('qmeta').innerHTML='Região <b>'+r.regiao+'</b> · R$ '+NUM(r.rate)+'/kg · mín '+BRL(r.min)+' · base: <b>'+r.base+'</b>';
+  document.getElementById('qbreak').innerHTML=[['Frete peso',r.fretePeso],['GRIS',r.gris],['Ad Valorem',r.adval],
+    ['Pedágio',r.pedagio],['Taxa CT-e',r.cte],['Despacho',r.despacho],['ICMS (12%)',r.icms]]
+    .map(([k,v])=>'<div class="l"><span>'+k+'</span><span>'+BRL(v)+'</span></div>').join('');
+};
+
+/* parsing comum */
+const HCID=['cidade','municipio'], HPESO=['peso','peso (kgs)','kg','kgs'], HVAL=['valor','valor nf','vlr'],
+      HCLI=['cliente','razao social','fantasia'], HPED=['n.ped.','n.ped','nped','pedido','n. pedido','nro'];
+function findCol(h,names){for(let i=0;i<h.length;i++){const x=norm(h[i]);for(const n of names)if(x===norm(n))return i;}
+  for(let i=0;i<h.length;i++){const x=norm(h[i]);for(const n of names)if(x&&x.includes(norm(n)))return i;}return -1;}
+function parseWorkbook(wb){
+  let sheet=wb.SheetNames.find(s=>norm(s).includes('GRID FOX'))||wb.SheetNames[0];
+  const rows=XLSX.utils.sheet_to_json(wb.Sheets[sheet],{header:1,raw:true,defval:null});
+  let hr=-1;
+  for(let i=0;i<Math.min(rows.length,8);i++){const r=(rows[i]||[]).map(norm);
+    if(r.some(c=>c==='CIDADE'||HCID.includes(c))&&r.some(c=>c==='VALOR'||c.includes('VALOR'))){hr=i;break;}}
+  if(hr<0)hr=0;
+  const headers=rows[hr]||[];
+  const ci=findCol(headers,HCID),pi=findCol(headers,HPESO),vi=findCol(headers,HVAL),
+        cli=findCol(headers,HCLI),pedi=findCol(headers,HPED);
+  if(ci<0||vi<0)throw new Error('Não encontrei as colunas Cidade e/ou Valor.');
+  const data=[];
+  for(let i=hr+1;i<rows.length;i++){const row=rows[i];if(!row)continue;const cidade=row[ci];
+    if(cidade==null||String(cidade).trim()===''||norm(cidade)==='CIDADE')continue;
+    data.push({ped:pedi>=0?row[pedi]:'',cli:cli>=0?row[cli]:'',cidade,peso:pi>=0?row[pi]:0,valor:row[vi]});}
+  return {data,sheet};
+}
+
+/* botão atualizar */
+const statusEl=document.getElementById('srcStatus');
+function setStatus(c,h){statusEl.className='status '+c;statusEl.innerHTML=h;}
+document.getElementById('btnPull').onclick=async()=>{
+  let url=document.getElementById('srcurl').value.trim();
+  if(!url){setStatus('err','✕ Cole o link CSV publicado da aba Grid fox log.');return;}
+  url+=(url.indexOf('?')>-1?'&':'?')+'_cb='+Date.now();
+  setStatus('load','<span class="spin"></span> Puxando dados da planilha…');
+  try{
+    const resp=await fetch(url,{cache:'no-store'}); if(!resp.ok)throw new Error('HTTP '+resp.status);
+    const text=await resp.text();
+    if(text.trim().startsWith('<'))throw new Error('o link retornou HTML, não CSV. Publique a aba como CSV.');
+    const {data,sheet}=parseWorkbook(XLSX.read(text,{type:'string'}));
+    render(data,'planilha');
+    setStatus('ok','✓ '+data.length+' linha(s) lida(s) · atualizado '+new Date().toLocaleTimeString('pt-BR'));
+  }catch(err){setStatus('err','✕ Não consegui puxar direto ('+err.message+'). Costuma ser bloqueio de CORS/sandbox — baixe o HTML e abra direto, ou use o upload abaixo.');}
+};
+
+/* upload */
+const drop=document.getElementById('drop'),fileInput=document.getElementById('file');
+['dragover','dragenter'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add('over');}));
+['dragleave','drop'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove('over');}));
+drop.addEventListener('drop',e=>{if(e.dataTransfer.files.length)handleFile(e.dataTransfer.files[0]);});
+fileInput.addEventListener('change',e=>{if(e.target.files.length)handleFile(e.target.files[0]);});
+function handleFile(f){const rd=new FileReader();
+  rd.onload=e=>{try{const {data,sheet}=parseWorkbook(XLSX.read(e.target.result,{type:'array'}));
+    render(data,f.name);setStatus('ok','✓ '+data.length+' linha(s) lida(s) do arquivo "'+f.name+'"');}
+    catch(err){setStatus('err','✕ '+err.message);alert(err.message);}};
+  rd.readAsArrayBuffer(f);}
+
+/* render */
+let LAST=[];
+function render(data,origem){
+  const tbody=document.getElementById('tbody'); tbody.innerHTML='';
+  let nP=0,nV=0,nF=0,n=0; const notFound={}; let zeroW=0; LAST=[];
+  data.forEach((d,idx)=>{
+    const r=calc(d.cidade,d.peso,d.valor); const tr=document.createElement('tr');
+    if(!r.ok){
+      notFound[String(d.cidade).trim()]=(notFound[String(d.cidade).trim()]||0)+1; tr.className='bad';
+      tr.innerHTML='<td class="l">'+(idx+1)+'</td><td class="cli l">'+(d.cli||'')+'</td>'+
+        '<td class="cid l">'+(d.cidade||'')+'</td><td class="l"><span class="tag err">não atendida</span></td>'+
+        '<td>'+NUM(toNum(d.peso))+'</td><td>'+BRL(toNum(d.valor))+'</td>'+
+        '<td colspan="7" class="l">— cidade fora da cobertura —</td><td></td>';
+      LAST.push({ped:d.ped,cli:d.cli,cidade:d.cidade,regiao:'NAO ATENDIDA',peso:toNum(d.peso),valor:toNum(d.valor),r:null});
+    }else{
+      n++;nP+=r.peso;nV+=r.valor;nF+=r.total; if(r.peso===0)zeroW++;
+      tr.innerHTML='<td class="l">'+(idx+1)+'</td><td class="cli l" title="'+(d.cli||'')+'">'+(d.cli||'')+'</td>'+
+        '<td class="cid l">'+r.cidade+'</td><td class="l"><span class="rg">'+r.regiao+'</span></td>'+
+        '<td>'+NUM(r.peso)+(r.peso===0?' ⚠':'')+'</td><td>'+BRL(r.valor)+'</td>'+
+        '<td><span class="tag '+(r.base==='Mínimo'?'min':'kg')+'">'+r.base+'</span></td>'+
+        '<td>'+BRL(r.fretePeso)+'</td><td class="comp">'+BRL(r.gris)+'</td><td class="comp">'+BRL(r.adval)+'</td>'+
+        '<td class="comp">'+BRL(r.pedagio)+'</td><td class="comp">'+BRL(r.cte)+'</td><td class="comp">'+BRL(r.despacho)+'</td>'+
+        '<td class="tot">'+BRL(r.total)+'</td>';
+      LAST.push({ped:d.ped,cli:d.cli,cidade:d.cidade,regiao:r.regiao,peso:r.peso,valor:r.valor,r});
+    }
+    tbody.appendChild(tr);
+  });
+  document.getElementById('tbl').style.display=''; document.getElementById('empty').style.display='none';
+  document.getElementById('toolbar').style.display='flex';
+  document.getElementById('srcName').textContent=origem?('· '+origem):'';
+  document.getElementById('sCount').textContent=n; 
+  document.getElementById('sCountSub').textContent=(data.length>n?((data.length-n)+' fora da cobertura'):'todas atendidas');
+  document.getElementById('sPeso').textContent=NUM(nP)+' kg';
+  document.getElementById('sValor').textContent=BRL(nV);
+  document.getElementById('sMedio').textContent=n?BRL(nF/n):'—';
+  document.getElementById('sPct').textContent=nV?((nF/nV*100).toFixed(1).replace('.',',')+'% do valor NF'):'';
+  document.getElementById('sFrete').textContent=BRL(nF);
+  document.getElementById('tfoot').innerHTML='<tr><td colspan="4" class="l">TOTAL · '+n+' cargas</td>'+
+    '<td>'+NUM(nP)+'</td><td>'+BRL(nV)+'</td><td colspan="6"></td><td></td><td class="grand">'+BRL(nF)+'</td></tr>';
+  let w='';const nf=Object.keys(notFound);
+  if(nf.length)w+='<div class="warn red"><b>'+nf.length+' cidade(s) não atendida(s)</b> — ficaram fora do total.'+
+    '<div class="clist">'+nf.map(c=>c+(notFound[c]>1?(' ('+notFound[c]+'×)'):'')).join(' · ')+'</div></div>';
+  if(zeroW)w+='<div class="warn amb"><b>'+zeroW+' carga(s) com peso 0 ⚠</b> — calculadas no frete mínimo. Confira se o peso não ficou em branco na origem.</div>';
+  document.getElementById('warnbox').innerHTML=w;
+  document.querySelectorAll('.results').forEach(e=>e.classList.add('show'));
+  document.getElementById('tscroll').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+document.getElementById('exp').onclick=()=>{
+  if(!LAST.length)return;
+  const head=['Pedido','Cliente','Cidade','Regiao','Peso_kg','Valor_NF','Frete_Peso','GRIS','Ad_Valorem','Pedagio','Taxa_CTe','Despacho','ICMS','Frete_Total'];
+  const lines=[head.join(';')];
+  LAST.forEach(x=>{const r=x.r;
+    const c=r?[x.ped,x.cli,x.cidade,x.regiao,x.peso,x.valor,r.fretePeso,r.gris,r.adval,r.pedagio,r.cte,r.despacho,r.icms,r.total]
+             :[x.ped,x.cli,x.cidade,'NAO ATENDIDA',x.peso,x.valor,'','','','','','','',''];
+    lines.push(c.map(v=>typeof v==='number'?String(v).replace('.',','):('"'+String(v==null?'':v).replace(/"/g,'""')+'"')).join(';'));});
+  const blob=new Blob(['\ufeff'+lines.join('\n')],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='frete_calculado.csv';a.click();
+};
+</script>
+</body>
+</html>
