@@ -539,6 +539,7 @@ tfoot .grand{color:var(--blue-d);font-size:1.02rem}
       <div class="kmline"><input id="kKm" type="number" step="1" placeholder="ex.: 145"><button class="btn ghost sm" id="btnKm" type="button">📍 Calcular KM pelos CEPs</button></div>
     </div>
     <div class="kmnote" id="kKmNote">Suba o arquivo e clique em <b>Calcular KM pelos CEPs</b> para a rota automática, ou digite manualmente.</div>
+    <div class="fld" style="margin-top:11px"><label>Margem de reserva (%) — aplicada sobre o km da rota</label><input id="kMargem" type="number" step="1" value="10"></div>
     <div class="row2" style="margin-top:11px">
       <div class="fld"><label>Qtd motoristas</label><input id="kMot" type="number" step="1" value="2"></div>
       <div class="fld"><label>Qtd diárias</label><input id="kDia" type="number" step="1" value="3"></div>
@@ -1024,15 +1025,28 @@ async function calcularKmAuto(){
       let d=0; for(let i=1;i<path.length;i++) d+=haversine(path[i-1],path[i]);
       km=d*1.30; metodo='estimativa (linha reta × 1,30 — roteador indisponível)';
     }
-    document.getElementById('kKm').value=Math.round(km);
-    renderCusto();
-    setKmNote('blue','✓ <b>'+NUM(Math.round(km))+' km</b> · '+stops.length+' parada(s) · ida e volta de Mauá · '+metodo+
-      (geoFail?(' · '+geoFail+' CEP(s) não localizado(s) e ignorado(s)'):'')+'. Edite se precisar.');
+    GRID.routeKm=km; GRID.kmMethod=metodo; GRID.kmStops=stops.length; GRID.kmGeoFail=geoFail;
+    aplicarMargem();
   }catch(err){
     setKmNote('bad','✕ '+err.message+'. Isso pode ser bloqueio de internet/CORS (não roda na pré-visualização — abra o HTML direto). Você pode digitar o km manualmente.');
   }finally{ btn.disabled=false; }
 }
+function aplicarMargem(){
+  if(GRID.routeKm==null) return;
+  const m=toNum(document.getElementById('kMargem').value)||0;
+  const base=Math.round(GRID.routeKm);
+  const fin=Math.round(GRID.routeKm*(1+m/100));
+  document.getElementById('kKm').value=fin;
+  let txt='✓ rota <b>'+NUM(base)+' km</b>';
+  if(m>0) txt+=' + '+NUM(m)+'% reserva = <b>'+NUM(fin)+' km</b> (usado no cálculo)';
+  else txt+=' (sem margem)';
+  txt+=' · '+GRID.kmStops+' parada(s) · ida e volta · '+GRID.kmMethod+
+       (GRID.kmGeoFail?(' · '+GRID.kmGeoFail+' CEP(s) não localizado(s)'):'')+'. Edite se precisar.';
+  setKmNote('blue',txt);
+  renderCusto();
+}
 document.getElementById('btnKm').onclick=calcularKmAuto;
+document.getElementById('kMargem').addEventListener('input',aplicarMargem);
 
 /* troca de abas */
 document.querySelectorAll('.tab').forEach(tb=>tb.onclick=()=>{
