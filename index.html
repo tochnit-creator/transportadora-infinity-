@@ -131,9 +131,30 @@ details.alt summary:hover{color:var(--blue-d)}
 .kpi .v{font-family:'JetBrains Mono';font-weight:700;font-size:1.5rem;margin-top:7px;letter-spacing:-.01em}
 .kpi .sub{font-size:.68rem;color:var(--faint);margin-top:3px;font-family:'JetBrains Mono'}
 .kpi.feat .sub{color:#cfe1f9}
-.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:13px}
-.toolbar .ttl{font-family:'Sora';font-weight:700;font-size:.95rem;flex:1}
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:13px;flex-wrap:wrap}
+.toolbar .ttl{font-family:'Sora';font-weight:700;font-size:.95rem;margin-right:auto}
 .toolbar .ttl span{color:var(--faint);font-weight:500;font-size:.82rem}
+.tctl{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.search{position:relative}
+.search svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);width:15px;height:15px;stroke:var(--faint);fill:none;stroke-width:2;pointer-events:none}
+.search input{background:#fff;border:1px solid var(--line);border-radius:9px;padding:9px 12px 9px 32px;font-family:'Manrope';font-size:.84rem;color:var(--ink);width:190px}
+.search input:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-soft)}
+.fsel{background:#fff;border:1px solid var(--line);border-radius:9px;padding:9px 12px;font-family:'Manrope';font-size:.84rem;color:var(--navy2);font-weight:600;cursor:pointer}
+.fsel:focus{outline:none;border-color:var(--blue)}
+.btn.sm{padding:9px 14px;font-size:.82rem}
+.btn.toggle{background:#fff;border:1px solid var(--line);color:var(--navy2);box-shadow:none}
+.btn.toggle.on{background:var(--blue-soft);border-color:var(--blue);color:var(--blue-d)}
+.btn.toggle:hover{border-color:var(--blue);transform:none}
+/* sortable headers */
+thead tr.cols-h th{cursor:pointer;user-select:none}
+thead tr.cols-h th .sx{opacity:.35;font-size:.85em;margin-left:3px}
+thead tr.cols-h th.sorted .sx{opacity:1;color:#fff}
+thead tr.cols-h th:hover{color:#fff}
+thead tr.cols-h th.nos{cursor:default}
+thead tr.cols-h th.nos:hover{color:#cdd9ea}
+/* compact mode: hide composition detail cols */
+table.compact .cmp{display:none}
+.norows{padding:34px 20px;text-align:center;color:var(--faint);font-family:'Manrope';font-size:.86rem}
 .warn{border-radius:12px;padding:13px 16px;margin-bottom:14px;font-size:.83rem;line-height:1.5}
 .warn.red{background:var(--red-bg);border:1px solid #f3c5c5} .warn.red b{color:var(--red)}
 .warn.amb{background:var(--amber-bg);border:1px solid #f0dcae} .warn.amb b{color:var(--amber)}
@@ -261,7 +282,15 @@ tfoot .grand{color:var(--blue-d);font-size:1.02rem}
 
 <div class="toolbar" id="toolbar" style="display:none">
   <div class="ttl">Detalhamento por carga <span id="srcName"></span></div>
-  <button class="btn ghost" id="exp">Exportar CSV</button>
+  <div class="tctl">
+    <div class="search">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg>
+      <input id="fSearch" placeholder="buscar cliente ou cidade…" autocomplete="off">
+    </div>
+    <select class="fsel" id="fRegion"><option value="">Todas as regiões</option></select>
+    <button class="btn toggle sm" id="fCompact">Compacta</button>
+    <button class="btn ghost sm" id="exp">Exportar CSV</button>
+  </div>
 </div>
 
 <div class="tablewrap">
@@ -280,10 +309,10 @@ tfoot .grand{color:var(--blue-d);font-size:1.02rem}
           <th></th>
         </tr>
         <tr class="cols-h">
-          <th class="l">#</th><th class="l">Cliente</th><th class="l">Cidade</th><th class="l">Região</th>
-          <th>Peso</th><th>Valor NF</th>
-          <th>Base</th><th>Frete peso</th><th>GRIS</th><th>Ad Val.</th><th>Pedágio</th><th>CT-e</th><th>Desp.</th>
-          <th>Frete total</th>
+          <th class="l nos">#</th><th class="l" data-sort="cli">Cliente<span class="sx">↕</span></th><th class="l" data-sort="cidade">Cidade<span class="sx">↕</span></th><th class="l" data-sort="regiao">Região<span class="sx">↕</span></th>
+          <th data-sort="peso">Peso<span class="sx">↕</span></th><th data-sort="valor">Valor NF<span class="sx">↕</span></th>
+          <th class="nos">Base</th><th class="cmp" data-sort="fretePeso">Frete peso<span class="sx">↕</span></th><th class="cmp" data-sort="gris">GRIS<span class="sx">↕</span></th><th class="cmp" data-sort="adval">Ad Val.<span class="sx">↕</span></th><th class="cmp" data-sort="pedagio">Pedágio<span class="sx">↕</span></th><th class="cmp" data-sort="cte">CT-e<span class="sx">↕</span></th><th class="cmp" data-sort="despacho">Desp.<span class="sx">↕</span></th>
+          <th data-sort="total">Frete total<span class="sx">↕</span></th>
         </tr>
       </thead>
       <tbody id="tbody"></tbody>
@@ -424,52 +453,116 @@ function handleFile(f){const rd=new FileReader();
   rd.readAsArrayBuffer(f);}
 
 /* render */
-let LAST=[];
+let LAST=[];               // todas as linhas calculadas
+let sortKey=null, sortDir=1;  // 1=asc, -1=desc
+let compact=false;
+
+function rowHTML(x){
+  const idx=x.idx;
+  if(!x.r){
+    return '<tr class="bad"><td class="l">'+(idx+1)+'</td><td class="cli l">'+(x.cli||'')+'</td>'+
+      '<td class="cid l">'+(x.cidade||'')+'</td><td class="l"><span class="tag err">não atendida</span></td>'+
+      '<td>'+NUM(x.peso)+'</td><td>'+BRL(x.valor)+'</td>'+
+      '<td class="l" colspan="7">— cidade fora da cobertura —</td><td></td></tr>';
+  }
+  const r=x.r;
+  return '<tr><td class="l">'+(idx+1)+'</td><td class="cli l" title="'+(x.cli||'')+'">'+(x.cli||'')+'</td>'+
+    '<td class="cid l">'+x.cidade+'</td><td class="l"><span class="rg">'+x.regiao+'</span></td>'+
+    '<td>'+NUM(r.peso)+(r.peso===0?' ⚠':'')+'</td><td>'+BRL(r.valor)+'</td>'+
+    '<td><span class="tag '+(r.base==='Mínimo'?'min':'kg')+'">'+r.base+'</span></td>'+
+    '<td class="cmp">'+BRL(r.fretePeso)+'</td><td class="comp cmp">'+BRL(r.gris)+'</td><td class="comp cmp">'+BRL(r.adval)+'</td>'+
+    '<td class="comp cmp">'+BRL(r.pedagio)+'</td><td class="comp cmp">'+BRL(r.cte)+'</td><td class="comp cmp">'+BRL(r.despacho)+'</td>'+
+    '<td class="tot">'+BRL(r.total)+'</td></tr>';
+}
+
 function render(data,origem){
-  const tbody=document.getElementById('tbody'); tbody.innerHTML='';
-  let nP=0,nV=0,nF=0,n=0; const notFound={}; let zeroW=0; LAST=[];
+  LAST=[]; let nP=0,nV=0,nF=0,n=0; const notFound={}; let zeroW=0;
   data.forEach((d,idx)=>{
-    const r=calc(d.cidade,d.peso,d.valor); const tr=document.createElement('tr');
+    const r=calc(d.cidade,d.peso,d.valor);
     if(!r.ok){
-      notFound[String(d.cidade).trim()]=(notFound[String(d.cidade).trim()]||0)+1; tr.className='bad';
-      tr.innerHTML='<td class="l">'+(idx+1)+'</td><td class="cli l">'+(d.cli||'')+'</td>'+
-        '<td class="cid l">'+(d.cidade||'')+'</td><td class="l"><span class="tag err">não atendida</span></td>'+
-        '<td>'+NUM(toNum(d.peso))+'</td><td>'+BRL(toNum(d.valor))+'</td>'+
-        '<td colspan="7" class="l">— cidade fora da cobertura —</td><td></td>';
-      LAST.push({ped:d.ped,cli:d.cli,cidade:d.cidade,regiao:'NAO ATENDIDA',peso:toNum(d.peso),valor:toNum(d.valor),r:null});
+      notFound[String(d.cidade).trim()]=(notFound[String(d.cidade).trim()]||0)+1;
+      LAST.push({idx,ped:d.ped,cli:d.cli,cidade:d.cidade,regiao:'NAO ATENDIDA',peso:toNum(d.peso),valor:toNum(d.valor),total:0,r:null});
     }else{
       n++;nP+=r.peso;nV+=r.valor;nF+=r.total; if(r.peso===0)zeroW++;
-      tr.innerHTML='<td class="l">'+(idx+1)+'</td><td class="cli l" title="'+(d.cli||'')+'">'+(d.cli||'')+'</td>'+
-        '<td class="cid l">'+r.cidade+'</td><td class="l"><span class="rg">'+r.regiao+'</span></td>'+
-        '<td>'+NUM(r.peso)+(r.peso===0?' ⚠':'')+'</td><td>'+BRL(r.valor)+'</td>'+
-        '<td><span class="tag '+(r.base==='Mínimo'?'min':'kg')+'">'+r.base+'</span></td>'+
-        '<td>'+BRL(r.fretePeso)+'</td><td class="comp">'+BRL(r.gris)+'</td><td class="comp">'+BRL(r.adval)+'</td>'+
-        '<td class="comp">'+BRL(r.pedagio)+'</td><td class="comp">'+BRL(r.cte)+'</td><td class="comp">'+BRL(r.despacho)+'</td>'+
-        '<td class="tot">'+BRL(r.total)+'</td>';
-      LAST.push({ped:d.ped,cli:d.cli,cidade:d.cidade,regiao:r.regiao,peso:r.peso,valor:r.valor,r});
+      LAST.push({idx,ped:d.ped,cli:d.cli,cidade:r.cidade,regiao:r.regiao,peso:r.peso,valor:r.valor,
+        total:r.total,fretePeso:r.fretePeso,gris:r.gris,adval:r.adval,pedagio:r.pedagio,cte:r.cte,despacho:r.despacho,r});
     }
-    tbody.appendChild(tr);
   });
+  // KPIs (sempre sobre o conjunto completo)
   document.getElementById('tbl').style.display=''; document.getElementById('empty').style.display='none';
   document.getElementById('toolbar').style.display='flex';
   document.getElementById('srcName').textContent=origem?('· '+origem):'';
-  document.getElementById('sCount').textContent=n; 
+  document.getElementById('sCount').textContent=n;
   document.getElementById('sCountSub').textContent=(data.length>n?((data.length-n)+' fora da cobertura'):'todas atendidas');
   document.getElementById('sPeso').textContent=NUM(nP)+' kg';
   document.getElementById('sValor').textContent=BRL(nV);
   document.getElementById('sMedio').textContent=n?BRL(nF/n):'—';
   document.getElementById('sPct').textContent=nV?((nF/nV*100).toFixed(1).replace('.',',')+'% do valor NF'):'';
   document.getElementById('sFrete').textContent=BRL(nF);
-  document.getElementById('tfoot').innerHTML='<tr><td colspan="4" class="l">TOTAL · '+n+' cargas</td>'+
-    '<td>'+NUM(nP)+'</td><td>'+BRL(nV)+'</td><td colspan="6"></td><td></td><td class="grand">'+BRL(nF)+'</td></tr>';
+  // avisos
   let w='';const nf=Object.keys(notFound);
   if(nf.length)w+='<div class="warn red"><b>'+nf.length+' cidade(s) não atendida(s)</b> — ficaram fora do total.'+
     '<div class="clist">'+nf.map(c=>c+(notFound[c]>1?(' ('+notFound[c]+'×)'):'')).join(' · ')+'</div></div>';
   if(zeroW)w+='<div class="warn amb"><b>'+zeroW+' carga(s) com peso 0 ⚠</b> — calculadas no frete mínimo. Confira se o peso não ficou em branco na origem.</div>';
   document.getElementById('warnbox').innerHTML=w;
+  // popular filtro de região com as que existem
+  const sel=document.getElementById('fRegion'); const present=[];
+  REG_ORDER.forEach(rg=>{ if(LAST.some(x=>x.regiao===rg)) present.push(rg); });
+  let opts='<option value="">Todas as regiões</option>'+present.map(rg=>'<option value="'+rg+'">'+rg+'</option>').join('');
+  if(LAST.some(x=>x.regiao==='NAO ATENDIDA')) opts+='<option value="NAO ATENDIDA">Não atendidas</option>';
+  sel.innerHTML=opts;
   document.querySelectorAll('.results').forEach(e=>e.classList.add('show'));
+  applyView();
   document.getElementById('tscroll').scrollIntoView({behavior:'smooth',block:'nearest'});
 }
+
+function applyView(){
+  const q=norm(document.getElementById('fSearch').value);
+  const rf=document.getElementById('fRegion').value;
+  let rows=LAST.filter(x=>{
+    if(rf && x.regiao!==rf) return false;
+    if(q){ const hay=norm((x.cli||'')+' '+(x.cidade||'')); if(!hay.includes(q)) return false; }
+    return true;
+  });
+  if(sortKey){
+    rows=rows.slice().sort((a,b)=>{
+      let va=a[sortKey], vb=b[sortKey];
+      if(sortKey==='cli'||sortKey==='cidade'||sortKey==='regiao'){ va=norm(va); vb=norm(vb); return va<vb?-sortDir:va>vb?sortDir:0; }
+      return ((va||0)-(vb||0))*sortDir;
+    });
+  }
+  const tbody=document.getElementById('tbody');
+  if(!rows.length){
+    tbody.innerHTML='<tr><td colspan="14" class="norows">Nenhuma carga encontrada com esse filtro.</td></tr>';
+  }else{
+    tbody.innerHTML=rows.map(rowHTML).join('');
+  }
+  // subtotal (rodapé) sobre o que está visível
+  let vP=0,vV=0,vF=0,vn=0;
+  rows.forEach(x=>{ if(x.r){ vn++; vP+=x.peso; vV+=x.valor; vF+=x.total; } });
+  const filtered=(q||rf);
+  document.getElementById('tfoot').innerHTML='<tr><td colspan="4" class="l">'+(filtered?'SUBTOTAL FILTRADO':'TOTAL')+' · '+vn+' cargas</td>'+
+    '<td>'+NUM(vP)+'</td><td>'+BRL(vV)+'</td><td colspan="6"></td><td></td><td class="grand">'+BRL(vF)+'</td></tr>';
+}
+
+/* controles da tabela */
+document.getElementById('fSearch').addEventListener('input',applyView);
+document.getElementById('fRegion').addEventListener('change',applyView);
+document.getElementById('fCompact').onclick=()=>{
+  compact=!compact;
+  document.getElementById('tbl').classList.toggle('compact',compact);
+  const b=document.getElementById('fCompact'); b.classList.toggle('on',compact);
+  b.textContent=compact?'Completa':'Compacta';
+};
+document.querySelectorAll('thead tr.cols-h th[data-sort]').forEach(th=>{
+  th.onclick=()=>{
+    const k=th.getAttribute('data-sort');
+    if(sortKey===k){ sortDir=-sortDir; } else { sortKey=k; sortDir=1; }
+    document.querySelectorAll('thead tr.cols-h th').forEach(t=>{t.classList.remove('sorted');const s=t.querySelector('.sx');if(s)s.textContent='↕';});
+    th.classList.add('sorted'); th.querySelector('.sx').textContent=sortDir>0?'↑':'↓';
+    applyView();
+  };
+});
 
 document.getElementById('exp').onclick=()=>{
   if(!LAST.length)return;
