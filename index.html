@@ -387,10 +387,10 @@ tfoot .grand{color:var(--blue-d);font-size:1.02rem}
 <div class="tabpane active" id="tab-frete">
 <div class="section-label">Cotação rápida</div>
 <div class="cardwrap-single">
-  <div class="card collapsible-card" id="cardCotacao">
+  <div class="card collapsible-card collapsed" id="cardCotacao">
     <div class="ch"><span class="ic"><svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="13" y2="16"/></svg></span>
       <h2>Cotação rápida</h2><span class="carr" title="ocultar / mostrar">▾</span></div>
-    <div class="cbody">
+    <div class="cbody" style="max-height:0;overflow:hidden">
     <p class="hint">Calcule uma carga só, sem subir nada.</p>
     <div class="manual">
       <div class="fld ac">
@@ -916,7 +916,7 @@ document.getElementById('kIncDiaria').addEventListener('change',renderCusto);
 renderCusto();
 
 /* ocultar/mostrar animado de cards */
-function setupCollapsible(cardId){
+function setupCollapsible(cardId, startCollapsed){
   const card=document.getElementById(cardId); if(!card) return;
   const head=card.querySelector('.ch'), body=card.querySelector('.cbody');
   function open(animate){
@@ -927,16 +927,18 @@ function setupCollapsible(cardId){
         body.style.maxHeight='none'; body.style.overflow='visible'; body.removeEventListener('transitionend',te); });
     }else{ body.style.maxHeight='none'; body.style.overflow='visible'; }
   }
-  function close(){
+  function close(animate){
     body.style.overflow='hidden';
-    body.style.maxHeight=body.scrollHeight+'px';
-    requestAnimationFrame(()=>requestAnimationFrame(()=>{ body.style.maxHeight='0px'; }));
+    if(animate){
+      body.style.maxHeight=body.scrollHeight+'px';
+      requestAnimationFrame(()=>requestAnimationFrame(()=>{ body.style.maxHeight='0px'; }));
+    }else{ body.style.maxHeight='0px'; }
     card.classList.add('collapsed');
   }
-  head.addEventListener('click',()=>{ card.classList.contains('collapsed')?open(true):close(); });
-  open(false);
+  head.addEventListener('click',()=>{ card.classList.contains('collapsed')?open(true):close(true); });
+  startCollapsed ? close(false) : open(false);
 }
-setupCollapsible('cardCotacao');
+setupCollapsible('cardCotacao', true);
 
 /* troca de abas */
 document.querySelectorAll('.tab').forEach(tb=>tb.onclick=()=>{
