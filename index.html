@@ -1276,12 +1276,13 @@ function printRisso(){
   let nP=0,nV=0,nF=0,n=0; const cid=new Set(); const nf=[];
   const rows=LAST.map(x=>{ const r=calcRisso(x.cidade,x.peso,x.valor);
     if(r.ok){ n++;nP+=toNum(x.peso);nV+=toNum(x.valor);nF+=r.total;cid.add(rkey(x.cidade));
-      return '<tr><td>'+(x.idx+1)+'</td><td class="l">'+esc(x.cli||'-')+'</td><td class="l">'+esc(x.cidade)+'</td><td>'+NUM(toNum(x.peso))+'</td><td>'+BRL(toNum(x.valor))+'</td><td>'+BRL(r.secat)+'</td><td class="b">'+BRL(r.total)+'</td></tr>';
-    } else { nf.push(x.cidade); return '<tr class="bad"><td>'+(x.idx+1)+'</td><td class="l">'+esc(x.cli||'-')+'</td><td class="l">'+esc(x.cidade)+'</td><td class="l" colspan="4">Risso não atende</td></tr>'; }
+      const pc=toNum(x.valor)>0?r.total/toNum(x.valor)*100:0;
+      return '<tr><td>'+(x.idx+1)+'</td><td class="l">'+esc(x.cli||'-')+'</td><td class="l">'+esc(x.cidade)+'</td><td>'+NUM(toNum(x.peso))+'</td><td>'+BRL(toNum(x.valor))+'</td><td>'+BRL(r.secat)+'</td><td class="b">'+BRL(r.total)+'</td><td class="'+(pc<=METAPCT?'pgood':'pbad')+'">'+(toNum(x.valor)>0?NUM(pc)+'%':'—')+'</td></tr>';
+    } else { nf.push(x.cidade); return '<tr class="bad"><td>'+(x.idx+1)+'</td><td class="l">'+esc(x.cli||'-')+'</td><td class="l">'+esc(x.cidade)+'</td><td class="l" colspan="5">Risso não atende</td></tr>'; }
   }).join('');
-  const tbl='<table class="rep-tbl"><thead><tr><th>#</th><th class="l">Cliente</th><th class="l">Cidade</th><th>Peso</th><th>Valor NF</th><th>SECAT</th><th>Frete Risso</th></tr></thead><tbody>'+rows+
-    '</tbody><tfoot><tr><td colspan="3" class="l">TOTAL — '+n+' carga(s)</td><td>'+NUM(nP)+' kg</td><td>'+BRL(nV)+'</td><td></td><td class="b">'+BRL(nF)+'</td></tr></tfoot></table>';
-  const kpis=kpiHTML([['Cargas',n],['Cidades',cid.size],['Peso',NUM(nP)+' kg'],['Valor NF',BRL(nV)],['Frete médio',n?BRL(nF/n):'—'],['Frete total',BRL(nF),true]]);
+  const tbl='<table class="rep-tbl"><thead><tr><th>#</th><th class="l">Cliente</th><th class="l">Cidade</th><th>Peso</th><th>Valor NF</th><th>SECAT</th><th>Frete Risso</th><th>% NF</th></tr></thead><tbody>'+rows+
+    '</tbody><tfoot><tr><td colspan="3" class="l">TOTAL — '+n+' carga(s)</td><td>'+NUM(nP)+' kg</td><td>'+BRL(nV)+'</td><td></td><td class="b">'+BRL(nF)+'</td><td class="'+(nV&&(nF/nV*100)<=METAPCT?'pgood':'pbad')+'">'+(nV?NUM(nF/nV*100)+'%':'—')+'</td></tr></tfoot></table>';
+  const kpis=kpiHTML([['Cargas',n],['Cidades',cid.size],['Peso',NUM(nP)+' kg'],['Valor NF',BRL(nV)],['% médio da NF',nV?NUM(nF/nV*100)+'%':'—'],['Frete total',BRL(nF),true]]);
   const warn=nf.length?'<div class="rep-warn"><b>'+nf.length+' cidade(s) não atendida(s) pela Risso:</b> '+nf.map(esc).join(' · ')+'</div>':'';
   const foot='<div class="rep-foot">Risso Transportes · R$ 0,65/kg + GRIS 0,20% + Seguro 0,30% + Pedágio R$ 8/100 kg + Despacho R$ 32 + SECAT por cidade · ICMS 12% por dentro.</div>';
   const src=document.getElementById('srcName').textContent.replace('·','').trim();
@@ -1293,13 +1294,19 @@ function printSim(){
   if(!SIMORD.length){ alert('Adicione pedidos na cotação primeiro.'); return; }
   let infT=0,risT=0,peso=0,valor=0;
   const rows=SIMORD.map((o,i)=>{ const ci=calc(o.cidade,o.peso,o.valor), cr=calcRisso(o.cidade,o.peso,o.valor);
-    peso+=toNum(o.peso); valor+=toNum(o.valor); if(ci.ok)infT+=ci.total; if(cr.ok)risT+=cr.total;
-    return '<tr><td>'+(i+1)+'</td><td class="l">'+esc(o.cidade)+'</td><td>'+NUM(toNum(o.peso))+'</td><td>'+BRL(toNum(o.valor))+'</td><td class="b">'+(ci.ok?BRL(ci.total):'—')+'</td><td>'+(cr.ok?BRL(cr.total):'—')+'</td></tr>';
+    const v=toNum(o.valor); peso+=toNum(o.peso); valor+=v; if(ci.ok)infT+=ci.total; if(cr.ok)risT+=cr.total;
+    const pI=(ci.ok&&v>0)?ci.total/v*100:null, pR=(cr.ok&&v>0)?cr.total/v*100:null;
+    return '<tr><td>'+(i+1)+'</td><td class="l">'+esc(o.cidade)+'</td><td>'+NUM(toNum(o.peso))+'</td><td>'+BRL(v)+'</td>'+
+      '<td class="b">'+(ci.ok?BRL(ci.total):'—')+'</td><td class="'+(pI==null?'':(pI<=METAPCT?'pgood':'pbad'))+'">'+(pI==null?'—':NUM(pI)+'%')+'</td>'+
+      '<td>'+(cr.ok?BRL(cr.total):'—')+'</td><td class="'+(pR==null?'':(pR<=METAPCT?'pgood':'pbad'))+'">'+(pR==null?'—':NUM(pR)+'%')+'</td></tr>';
   }).join('');
   const pr=calcProprioSim();
-  const tbl='<table class="rep-tbl"><thead><tr><th>#</th><th class="l">Cidade</th><th>Peso</th><th>Valor NF</th><th>Infinity</th><th>Risso</th></tr></thead><tbody>'+rows+
-    '</tbody><tfoot><tr><td colspan="2" class="l">TOTAL — '+SIMORD.length+' pedido(s)</td><td>'+NUM(peso)+' kg</td><td>'+BRL(valor)+'</td><td class="b">'+BRL(infT)+'</td><td>'+BRL(risT)+'</td></tr></tfoot></table>';
-  const kpis=kpiHTML([['Pedidos',SIMORD.length],['Peso',NUM(peso)+' kg'],['Valor NF',BRL(valor)],['Infinity',BRL(infT)],['Risso',BRL(risT)],['Veículo próprio',BRL(pr.total),true]]);
+  const tbl='<table class="rep-tbl"><thead><tr><th>#</th><th class="l">Cidade</th><th>Peso</th><th>Valor NF</th><th>Infinity</th><th>% NF</th><th>Risso</th><th>% NF</th></tr></thead><tbody>'+rows+
+    '</tbody><tfoot><tr><td colspan="2" class="l">TOTAL — '+SIMORD.length+' pedido(s)</td><td>'+NUM(peso)+' kg</td><td>'+BRL(valor)+'</td>'+
+    '<td class="b">'+BRL(infT)+'</td><td class="'+(valor&&(infT/valor*100)<=METAPCT?'pgood':'pbad')+'">'+(valor?NUM(infT/valor*100)+'%':'—')+'</td>'+
+    '<td>'+BRL(risT)+'</td><td class="'+(valor&&(risT/valor*100)<=METAPCT?'pgood':'pbad')+'">'+(valor?NUM(risT/valor*100)+'%':'—')+'</td></tr></tfoot></table>';
+  const pNF=t=>valor?' · '+NUM(t/valor*100)+'% NF':'';
+  const kpis=kpiHTML([['Pedidos',SIMORD.length],['Peso',NUM(peso)+' kg'],['Valor NF',BRL(valor)],['Infinity',BRL(infT)+pNF(infT)],['Risso',BRL(risT)+pNF(risT)],['Veículo próprio',BRL(pr.total)+pNF(pr.total),true]]);
   const foot='<div class="rep-foot">Simulação · Infinity (tabela por região) × Risso (R$ 0,65/kg + SECAT) × Veículo próprio ('+NUM(pr.km)+' km × R$ '+NUM(pr.rate)+'/km + motorista + diárias).</div>';
   document.getElementById('printArea').innerHTML='<div class="rep">'+repHead('Cotação · Simulação de Rota','')+
     '<div class="rep-sec">Resumo</div>'+kpis+'<div class="rep-sec">Pedidos</div>'+tbl+foot+'</div>';
@@ -1356,12 +1363,12 @@ function printFrete(){
   LAST.forEach(x=>{ if(x.r){n++;nP+=x.peso;nV+=x.valor;nF+=x.total;cid.add(norm(x.cidade));} else nf.push(x.cidade); });
   const src=document.getElementById('srcName').textContent.replace('·','').trim();
   const rows=LAST.map(x=> x.r
-    ? '<tr><td>'+(x.idx+1)+'</td><td class="l">'+esc(x.cli||'-')+'</td><td class="l">'+esc(x.cidade)+'</td><td class="l">'+x.regiao+'</td><td>'+NUM(x.peso)+'</td><td>'+BRL(x.valor)+'</td><td class="b">'+BRL(x.total)+'</td></tr>'
-    : '<tr class="bad"><td>'+(x.idx+1)+'</td><td class="l">'+esc(x.cli||'-')+'</td><td class="l">'+esc(x.cidade)+'</td><td class="l" colspan="4">não atendida — fora da cobertura</td></tr>'
+    ? '<tr><td>'+(x.idx+1)+'</td><td class="l">'+esc(x.cli||'-')+'</td><td class="l">'+esc(x.cidade)+'</td><td class="l">'+x.regiao+'</td><td>'+NUM(x.peso)+'</td><td>'+BRL(x.valor)+'</td><td class="b">'+BRL(x.total)+'</td><td class="'+((x.pct||0)<=METAPCT?'pgood':'pbad')+'">'+(x.valor>0?NUM(x.pct||0)+'%':'—')+'</td></tr>'
+    : '<tr class="bad"><td>'+(x.idx+1)+'</td><td class="l">'+esc(x.cli||'-')+'</td><td class="l">'+esc(x.cidade)+'</td><td class="l" colspan="5">não atendida — fora da cobertura</td></tr>'
   ).join('');
-  const tbl='<table class="rep-tbl"><thead><tr><th>#</th><th class="l">Cliente</th><th class="l">Cidade</th><th class="l">Região</th><th>Peso</th><th>Valor NF</th><th>Frete</th></tr></thead><tbody>'+rows+
-    '</tbody><tfoot><tr><td colspan="4" class="l">TOTAL — '+n+' carga(s)</td><td>'+NUM(nP)+' kg</td><td>'+BRL(nV)+'</td><td class="b">'+BRL(nF)+'</td></tr></tfoot></table>';
-  const kpis=kpiHTML([['Cargas',n],['Cidades',cid.size],['Peso total',NUM(nP)+' kg'],['Valor NF',BRL(nV)],['Frete médio',n?BRL(nF/n):'—'],['Frete total',BRL(nF),true]]);
+  const tbl='<table class="rep-tbl"><thead><tr><th>#</th><th class="l">Cliente</th><th class="l">Cidade</th><th class="l">Região</th><th>Peso</th><th>Valor NF</th><th>Frete</th><th>% NF</th></tr></thead><tbody>'+rows+
+    '</tbody><tfoot><tr><td colspan="4" class="l">TOTAL — '+n+' carga(s)</td><td>'+NUM(nP)+' kg</td><td>'+BRL(nV)+'</td><td class="b">'+BRL(nF)+'</td><td class="'+(nV&&(nF/nV*100)<=METAPCT?'pgood':'pbad')+'">'+(nV?NUM(nF/nV*100)+'%':'—')+'</td></tr></tfoot></table>';
+  const kpis=kpiHTML([['Cargas',n],['Cidades',cid.size],['Peso total',NUM(nP)+' kg'],['Valor NF',BRL(nV)],['% médio da NF',nV?NUM(nF/nV*100)+'%':'—'],['Frete total',BRL(nF),true]]);
   const warn=nf.length?('<div class="rep-warn"><b>'+nf.length+' cidade(s) não atendida(s):</b> '+nf.map(esc).join(' · ')+'</div>'):'';
   const foot='<div class="rep-foot">Frete peso = máx(Peso × R$/kg, mínimo) · Total = (Frete peso + GRIS + Ad Valorem + Pedágio + CT-e + Despacho) ÷ 0,88 (ICMS 12% por dentro).<br>Tabela de preços por região (nov/2025) · Documento gerado pela calculadora Infinity Log.</div>';
   document.getElementById('printArea').innerHTML='<div class="rep">'+repHead('Relatório de Frete — Transportadora',(src?('Arquivo: '+esc(src)+'<br>'):''))+
