@@ -236,6 +236,14 @@ tfoot .grand{color:var(--blue-d);font-size:1.02rem}
 .risso-tbl td.b{font-weight:700;color:var(--blue-d)}
 .risso-tbl tr.bad td{background:var(--red-bg);color:var(--red)}
 .risso-tbl tfoot td{border-top:2px solid var(--navy);font-weight:700;background:var(--surface2)}
+.risso-tbl td.b2{font-weight:700;color:var(--blue)}
+.sim-tbl td.bad2{color:var(--muted);font-style:italic;text-align:right;font-family:inherit;font-size:.72rem}
+.sim-tbl .rg2{font-size:.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;margin-top:1px;font-family:'Manrope'}
+.simx{border:1px solid var(--line);background:var(--surface);color:var(--muted);width:24px;height:24px;border-radius:7px;cursor:pointer;font-size:.7rem;line-height:1;transition:.15s}
+.simx:hover{background:#fdecec;border-color:#f0b8b8;color:#d6232a}
+.cmp-col.win{border-color:#7bc96f;background:linear-gradient(180deg,#f1faef,#fff);box-shadow:0 2px 10px rgba(86,171,71,.18)}
+.cmp-col.win .v{color:#2f8f3e}
+.cmp-col.win .t::after{content:' ✓ menor';color:#2f8f3e;font-weight:700;font-size:.62rem}
 .topbar,.tab,.tab.active,.btn,.kpi.feat,.cmp-col.feat,.rcard.feat,.section-label,.logo .inf{transition:background-color .45s ease,border-color .45s ease,color .45s ease}
 body.theme-risso{
   --navy:#13408c; --navy2:#1a52b0; --blue:#e1242b; --blue-d:#bb1d23;
@@ -509,13 +517,14 @@ table.rep-tbl tfoot td{border-top:2px solid var(--navy);font-weight:700;backgrou
   <button class="tab active" data-tab="frete"><span class="ti">📦</span> Frete transportadora</button>
   <button class="tab" data-tab="custo"><span class="ti">🚚</span> Cálculo custo próprio</button>
   <button class="tab" data-tab="risso"><span class="ti">🚛</span> Risso (terceiro)</button>
+  <button class="tab" data-tab="cotacao"><span class="ti">🧮</span> Cotação rápida</button>
 </div>
 
 <!-- ================= ABA 1: FRETE ================= -->
 <div class="tabpane active" id="tab-frete">
-<div class="section-label">Cotação rápida & comparativo</div>
-<div class="twocol">
-  <div class="card collapsible-card collapsed" id="cardCotacao">
+<div class="section-label">Comparativo de modais</div>
+<div class="cardwrap-single" style="max-width:none">
+  <div class="card collapsible-card collapsed" id="cardCotacao" style="display:none">
     <div class="ch"><span class="ic"><svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="13" y2="16"/></svg></span>
       <h2>Cotação rápida</h2><span class="carr" title="ocultar / mostrar">▾</span></div>
     <div class="cbody" style="max-height:0;overflow:hidden">
@@ -542,7 +551,7 @@ table.rep-tbl tfoot td{border-top:2px solid var(--navy);font-weight:700;backgrou
 
   <div class="card" id="cmpCard">
     <div class="ch"><span class="ic"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><rect x="7" y="11" width="3" height="7"/><rect x="12" y="7" width="3" height="11"/><rect x="17" y="13" width="3" height="5"/></svg></span>
-      <h2>Transportadora × Veículo próprio</h2></div>
+      <h2>Transportadora × Veículo próprio × Risso</h2></div>
     <div id="cmpBody"><p class="hint">Suba o arquivo para comparar.</p></div>
   </div>
 </div>
@@ -695,6 +704,42 @@ table.rep-tbl tfoot td{border-top:2px solid var(--navy);font-weight:700;backgrou
 <div class="tabpane" id="tab-risso">
   <div class="section-label">Risso Transportes · frete por carga (terceiro)</div>
   <div id="rissoBody"><p class="hint">Suba o arquivo da Grid fox log para calcular o frete pela Risso. A Risso cobra R$ 0,65/kg + coleta/entrega (SECAT) por cidade — e atende apenas as cidades da lista dela.</p></div>
+  <div style="margin-top:14px"><button class="btn ghost sm" id="btnPrintRisso">🖨 Romaneio / PDF Risso</button></div>
+</div>
+
+<!-- ================= ABA 4: COTAÇÃO RÁPIDA ================= -->
+<div class="tabpane" id="tab-cotacao">
+  <div class="section-label">Cotação rápida · monte os pedidos e simule nos 3 modais</div>
+  <div class="twocol">
+    <div class="card">
+      <div class="ch"><span class="ic"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span>
+        <h2>Adicionar pedido</h2></div>
+      <div class="manual">
+        <div class="fld ac">
+          <label>Cidade de entrega</label>
+          <input id="sCidIn" autocomplete="off" placeholder="ex.: Votuporanga">
+          <div class="aclist" id="sAclist" style="display:none"></div>
+        </div>
+        <div class="row2">
+          <div class="fld"><label>Peso (kg)</label><input id="sPesoIn" type="number" step="0.01" placeholder="0,00"></div>
+          <div class="fld"><label>Valor NF (R$)</label><input id="sValorIn" type="number" step="0.01" placeholder="0,00"></div>
+        </div>
+        <button class="btn" id="sAdd">+ Adicionar pedido</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ch"><span class="ic"><svg viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></span>
+        <h2>Veículo próprio (rota)</h2></div>
+      <div class="fld"><label>KM total da viagem (ida e volta)</label><input id="sKm" type="number" step="1" placeholder="ex.: 1666"></div>
+      <div class="row2" style="margin-top:11px">
+        <div class="fld"><label>Motoristas</label><input id="sMot" type="number" step="1" value="2"></div>
+        <div class="fld"><label>Diárias</label><input id="sDia" type="number" step="1" value="3"></div>
+      </div>
+      <p class="hint" style="margin-top:9px">Usa as tarifas da aba <b>Cálculo custo próprio</b> (R$/km, diária do motorista, hospedagem e refeição). Ajuste-as lá se precisar.</p>
+    </div>
+  </div>
+  <div id="simBody" style="margin-top:4px"><p class="hint">Adicione um ou mais pedidos para ver o frete pela Infinity, pela Risso e o custo do veículo próprio — lado a lado.</p></div>
+  <div style="margin-top:14px"><button class="btn ghost sm" id="btnPrintSim">🖨 Imprimir / PDF da cotação</button></div>
 </div>
 
 <div class="foot">
@@ -1135,6 +1180,111 @@ function renderRisso(){
   el.innerHTML=kpis+warn+tbl+note;
   renderCompare();
 }
+
+/* ===================== SIMULADOR (Cotação rápida multi-pedido) ===================== */
+let SIMORD=[];
+function attachAC(inp, list){
+  let sel=-1, items=[];
+  inp.addEventListener('input',()=>{const q=norm(inp.value);list.innerHTML='';sel=-1;
+    if(!q){list.style.display='none';return;}
+    items=CITIES.filter(c=>c.includes(q)).slice(0,8);
+    if(!items.length){list.style.display='none';return;}
+    items.forEach(c=>{const d=document.createElement('div');
+      d.innerHTML='<span>'+c+'</span><span class="rg">'+CMAP[c]+'</span>';
+      d.onclick=()=>{inp.value=c;list.style.display='none';};list.appendChild(d);});
+    list.style.display='block';});
+  inp.addEventListener('keydown',e=>{const ds=list.querySelectorAll('div');if(!ds.length)return;
+    if(e.key==='ArrowDown'){sel=(sel+1)%ds.length;e.preventDefault();}
+    else if(e.key==='ArrowUp'){sel=(sel-1+ds.length)%ds.length;e.preventDefault();}
+    else if(e.key==='Enter'){if(sel>=0){inp.value=items[sel];list.style.display='none';e.preventDefault();}return;}
+    else return; ds.forEach((d,i)=>d.classList.toggle('sel',i===sel));});
+  document.addEventListener('click',e=>{ if(!e.target.closest('.ac')) list.style.display='none'; });
+}
+attachAC(document.getElementById('sCidIn'), document.getElementById('sAclist'));
+function addSim(){
+  const cidade=document.getElementById('sCidIn').value.trim();
+  if(!cidade){ document.getElementById('sCidIn').focus(); return; }
+  SIMORD.push({cidade, peso:gv('sPesoIn'), valor:gv('sValorIn')});
+  ['sCidIn','sPesoIn','sValorIn'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('sCidIn').focus();
+  renderSim();
+}
+function removeSim(i){ SIMORD.splice(i,1); renderSim(); }
+function calcProprioSim(){
+  const km=gv('sKm'), mot=gv('sMot'), dia=gv('sDia');
+  let rate=0; VEIC_CATS.forEach((c,i)=>rate+=gv('km'+i));
+  const diario=gv('kDiario'), incD=document.getElementById('kIncDiaria').checked, hosp=gv('kHosp'), ref=gv('kRef');
+  return {total: rate*km + diario*mot*dia + (incD?(hosp+ref)*dia:0), rate, km, mot, dia};
+}
+function renderSim(){
+  const el=document.getElementById('simBody'); if(!el) return;
+  if(!SIMORD.length){ el.innerHTML='<p class="hint">Adicione um ou mais pedidos para ver o frete pela Infinity, pela Risso e o custo do veículo próprio — lado a lado.</p>'; return; }
+  let infT=0,infMiss=0, risT=0,risMiss=0, peso=0, valor=0;
+  const rows=SIMORD.map((o,i)=>{
+    const ci=calc(o.cidade,o.peso,o.valor), cr=calcRisso(o.cidade,o.peso,o.valor);
+    peso+=toNum(o.peso); valor+=toNum(o.valor);
+    let infCell; if(ci.ok){ infT+=ci.total; infCell='<td class="b">'+BRL(ci.total)+'</td>'; } else { infMiss++; infCell='<td class="bad2">não atende</td>'; }
+    let risCell; if(cr.ok){ risT+=cr.total; risCell='<td class="b2">'+BRL(cr.total)+'</td>'; } else { risMiss++; risCell='<td class="bad2">não atende</td>'; }
+    return '<tr><td class="l">'+(i+1)+'</td><td class="l">'+esc(o.cidade)+(ci.ok?'<div class="rg2">'+ci.regiao+'</div>':'')+'</td><td>'+NUM(toNum(o.peso))+'</td><td>'+BRL(toNum(o.valor))+'</td>'+infCell+risCell+'<td><button class="simx" onclick="removeSim('+i+')" title="remover">✕</button></td></tr>';
+  }).join('');
+  const pr=calcProprioSim();
+  const tbl='<div class="tablewrap" style="margin-top:12px"><table class="risso-tbl sim-tbl"><thead><tr>'+
+    '<th class="l">#</th><th class="l">Cidade</th><th>Peso</th><th>Valor NF</th><th>Infinity</th><th>Risso</th><th></th>'+
+    '</tr></thead><tbody>'+rows+'</tbody>'+
+    '<tfoot><tr><td colspan="2" class="l">TOTAL — '+SIMORD.length+' pedido(s)</td><td>'+NUM(peso)+' kg</td><td>'+BRL(valor)+'</td><td class="b">'+BRL(infT)+'</td><td class="b2">'+BRL(risT)+'</td><td></td></tr></tfoot></table></div>';
+  const opts=[['Infinity (tabela)',infT],['Risso',risT],['Veículo próprio',pr.total]];
+  const minv=Math.min(...opts.map(o=>o[1]));
+  const cards='<div class="cmp-grid" style="margin-top:14px">'+
+    '<div class="cmp-col'+(infT===minv?' win':'')+'"><div class="t">Infinity (tabela)</div><div class="v">'+BRL(infT)+'</div><div class="s">'+(infMiss?infMiss+' fora da área':'soma por carga')+'</div></div>'+
+    '<div class="cmp-col'+(risT===minv?' win':'')+'"><div class="t">Risso</div><div class="v">'+BRL(risT)+'</div><div class="s">'+(risMiss?risMiss+' fora da área':'R$ 0,65/kg + SECAT')+'</div></div>'+
+    '<div class="cmp-col'+(pr.total===minv?' win':'')+'"><div class="t">Veículo próprio</div><div class="v">'+BRL(pr.total)+'</div><div class="s">'+NUM(pr.km)+' km · '+NUM(pr.mot)+' mot · '+NUM(pr.dia)+' diárias</div></div>'+
+  '</div>';
+  const winner=opts.filter(o=>o[1]===minv)[0][0];
+  const head='<div class="cmp-head" style="margin-top:12px">Menor custo: <b>'+winner+'</b> ('+BRL(minv)+').'+(pr.km?'':' ⚠ informe o KM da rota para incluir o veículo próprio.')+'</div>';
+  el.innerHTML=tbl+cards+head;
+}
+document.getElementById('sAdd').onclick=addSim;
+document.getElementById('sValorIn').addEventListener('keydown',e=>{ if(e.key==='Enter') addSim(); });
+['sKm','sMot','sDia'].forEach(id=>document.getElementById(id).addEventListener('input',renderSim));
+
+/* ===================== ROMANEIO PDF — RISSO e COTAÇÃO ===================== */
+function printRisso(){
+  if(!LAST.length){ alert('Suba o arquivo da Grid fox log primeiro.'); return; }
+  let nP=0,nV=0,nF=0,n=0; const cid=new Set(); const nf=[];
+  const rows=LAST.map(x=>{ const r=calcRisso(x.cidade,x.peso,x.valor);
+    if(r.ok){ n++;nP+=toNum(x.peso);nV+=toNum(x.valor);nF+=r.total;cid.add(rkey(x.cidade));
+      return '<tr><td>'+(x.idx+1)+'</td><td class="l">'+esc(x.cli||'-')+'</td><td class="l">'+esc(x.cidade)+'</td><td>'+NUM(toNum(x.peso))+'</td><td>'+BRL(toNum(x.valor))+'</td><td>'+BRL(r.secat)+'</td><td class="b">'+BRL(r.total)+'</td></tr>';
+    } else { nf.push(x.cidade); return '<tr class="bad"><td>'+(x.idx+1)+'</td><td class="l">'+esc(x.cli||'-')+'</td><td class="l">'+esc(x.cidade)+'</td><td class="l" colspan="4">Risso não atende</td></tr>'; }
+  }).join('');
+  const tbl='<table class="rep-tbl"><thead><tr><th>#</th><th class="l">Cliente</th><th class="l">Cidade</th><th>Peso</th><th>Valor NF</th><th>SECAT</th><th>Frete Risso</th></tr></thead><tbody>'+rows+
+    '</tbody><tfoot><tr><td colspan="3" class="l">TOTAL — '+n+' carga(s)</td><td>'+NUM(nP)+' kg</td><td>'+BRL(nV)+'</td><td></td><td class="b">'+BRL(nF)+'</td></tr></tfoot></table>';
+  const kpis=kpiHTML([['Cargas',n],['Cidades',cid.size],['Peso',NUM(nP)+' kg'],['Valor NF',BRL(nV)],['Frete médio',n?BRL(nF/n):'—'],['Frete total',BRL(nF),true]]);
+  const warn=nf.length?'<div class="rep-warn"><b>'+nf.length+' cidade(s) não atendida(s) pela Risso:</b> '+nf.map(esc).join(' · ')+'</div>':'';
+  const foot='<div class="rep-foot">Risso Transportes · R$ 0,65/kg + GRIS 0,20% + Seguro 0,30% + Pedágio R$ 8/100 kg + Despacho R$ 32 + SECAT por cidade · ICMS 12% por dentro.</div>';
+  const src=document.getElementById('srcName').textContent.replace('·','').trim();
+  document.getElementById('printArea').innerHTML='<div class="rep">'+repHead('Romaneio · Risso Transportes',(src?('Arquivo: '+esc(src)+'<br>'):''))+
+    '<div class="rep-sec">Resumo</div>'+kpis+warn+'<div class="rep-sec">Cargas</div>'+tbl+foot+'</div>';
+  window.print();
+}
+function printSim(){
+  if(!SIMORD.length){ alert('Adicione pedidos na cotação primeiro.'); return; }
+  let infT=0,risT=0,peso=0,valor=0;
+  const rows=SIMORD.map((o,i)=>{ const ci=calc(o.cidade,o.peso,o.valor), cr=calcRisso(o.cidade,o.peso,o.valor);
+    peso+=toNum(o.peso); valor+=toNum(o.valor); if(ci.ok)infT+=ci.total; if(cr.ok)risT+=cr.total;
+    return '<tr><td>'+(i+1)+'</td><td class="l">'+esc(o.cidade)+'</td><td>'+NUM(toNum(o.peso))+'</td><td>'+BRL(toNum(o.valor))+'</td><td class="b">'+(ci.ok?BRL(ci.total):'—')+'</td><td>'+(cr.ok?BRL(cr.total):'—')+'</td></tr>';
+  }).join('');
+  const pr=calcProprioSim();
+  const tbl='<table class="rep-tbl"><thead><tr><th>#</th><th class="l">Cidade</th><th>Peso</th><th>Valor NF</th><th>Infinity</th><th>Risso</th></tr></thead><tbody>'+rows+
+    '</tbody><tfoot><tr><td colspan="2" class="l">TOTAL — '+SIMORD.length+' pedido(s)</td><td>'+NUM(peso)+' kg</td><td>'+BRL(valor)+'</td><td class="b">'+BRL(infT)+'</td><td>'+BRL(risT)+'</td></tr></tfoot></table>';
+  const kpis=kpiHTML([['Pedidos',SIMORD.length],['Peso',NUM(peso)+' kg'],['Valor NF',BRL(valor)],['Infinity',BRL(infT)],['Risso',BRL(risT)],['Veículo próprio',BRL(pr.total),true]]);
+  const foot='<div class="rep-foot">Simulação · Infinity (tabela por região) × Risso (R$ 0,65/kg + SECAT) × Veículo próprio ('+NUM(pr.km)+' km × R$ '+NUM(pr.rate)+'/km + motorista + diárias).</div>';
+  document.getElementById('printArea').innerHTML='<div class="rep">'+repHead('Cotação · Simulação de Rota','')+
+    '<div class="rep-sec">Resumo</div>'+kpis+'<div class="rep-sec">Pedidos</div>'+tbl+foot+'</div>';
+  window.print();
+}
+document.getElementById('btnPrintRisso').onclick=printRisso;
+document.getElementById('btnPrintSim').onclick=printSim;
+
 
 
 
