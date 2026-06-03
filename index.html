@@ -244,6 +244,9 @@ tfoot .grand{color:var(--blue-d);font-size:1.02rem}
 .cmp-col.win{border-color:#7bc96f;background:linear-gradient(180deg,#f1faef,#fff);box-shadow:0 2px 10px rgba(86,171,71,.18)}
 .cmp-col.win .v{color:#2f8f3e}
 .cmp-col.win .t::after{content:' ✓ menor';color:#2f8f3e;font-weight:700;font-size:.62rem}
+td.pgood,.pgood{color:#2f8f3e;font-weight:700}
+td.pbad,.pbad{color:#d6232a;font-weight:700}
+.grand.pgood{color:#2f8f3e}.grand.pbad{color:#d6232a}
 .topbar,.tab,.tab.active,.btn,.kpi.feat,.cmp-col.feat,.rcard.feat,.section-label,.logo .inf{transition:background-color .45s ease,border-color .45s ease,color .45s ease}
 body.theme-risso{
   --navy:#13408c; --navy2:#1a52b0; --blue:#e1242b; --blue-d:#bb1d23;
@@ -610,13 +613,14 @@ table.rep-tbl tfoot td{border-top:2px solid var(--navy);font-weight:700;backgrou
           <th class="l" colspan="4">Entrega</th>
           <th colspan="2">Carga</th>
           <th class="gblue" colspan="7">Composição do frete</th>
-          <th></th>
+          <th colspan="2"></th>
         </tr>
         <tr class="cols-h">
           <th class="l nos">#</th><th class="l" data-sort="cli">Cliente<span class="sx">↕</span></th><th class="l" data-sort="cidade">Cidade<span class="sx">↕</span></th><th class="l" data-sort="regiao">Região<span class="sx">↕</span></th>
           <th data-sort="peso">Peso<span class="sx">↕</span></th><th data-sort="valor">Valor NF<span class="sx">↕</span></th>
           <th class="nos">Base</th><th class="cmp" data-sort="fretePeso">Frete peso<span class="sx">↕</span></th><th class="cmp" data-sort="gris">GRIS<span class="sx">↕</span></th><th class="cmp" data-sort="adval">Ad Val.<span class="sx">↕</span></th><th class="cmp" data-sort="pedagio">Pedágio<span class="sx">↕</span></th><th class="cmp" data-sort="cte">CT-e<span class="sx">↕</span></th><th class="cmp" data-sort="despacho">Desp.<span class="sx">↕</span></th>
           <th data-sort="total">Frete total<span class="sx">↕</span></th>
+          <th data-sort="pct">% NF<span class="sx">↕</span></th>
         </tr>
       </thead>
       <tbody id="tbody"></tbody>
@@ -740,6 +744,16 @@ table.rep-tbl tfoot td{border-top:2px solid var(--navy);font-weight:700;backgrou
   </div>
   <div id="simBody" style="margin-top:4px"><p class="hint">Adicione um ou mais pedidos para ver o frete pela Infinity, pela Risso e o custo do veículo próprio — lado a lado.</p></div>
   <div style="margin-top:14px"><button class="btn ghost sm" id="btnPrintSim">🖨 Imprimir / PDF da cotação</button></div>
+
+  <div class="section-label" style="margin-top:24px">Pedido mínimo por região · meta de % da NF</div>
+  <div class="card">
+    <p class="hint">Defina a <b>meta de frete</b> (% sobre a nota) e o <b>peso típico</b> do pedido. A tabela mostra o <b>valor mínimo da NF</b> e o <b>R$/kg</b> necessários para o frete da Infinity ficar dentro da meta em cada região. Essa meta também colore a coluna "% NF" na aba <b>Frete transportadora</b> (verde dentro, vermelho acima).</p>
+    <div class="row2" style="margin-top:4px;max-width:420px">
+      <div class="fld"><label>Meta de frete (% da NF)</label><input id="mpMeta" type="number" step="0.5" value="10"></div>
+      <div class="fld"><label>Peso do pedido (kg)</label><input id="mpPeso" type="number" step="1" value="100"></div>
+    </div>
+    <div id="mpBody" style="margin-top:12px"></div>
+  </div>
 </div>
 
 <div class="foot">
@@ -875,6 +889,7 @@ function handleFile(f){const rd=new FileReader();
 let LAST=[];               // todas as linhas calculadas
 let CMP={frete:null,valor:null,proprio:null,km:null};  // comparativo de modais
 let sortKey=null, sortDir=1;  // 1=asc, -1=desc
+let METAPCT=10;               // meta de frete como % da NF (ligada à calculadora)
 let compact=false;
 
 function rowHTML(x){
@@ -883,16 +898,18 @@ function rowHTML(x){
     return '<tr class="bad"><td class="l">'+(idx+1)+'</td><td class="cli l">'+(x.cli||'')+'</td>'+
       '<td class="cid l">'+(x.cidade||'')+'</td><td class="l"><span class="tag err">não atendida</span></td>'+
       '<td>'+NUM(x.peso)+'</td><td>'+BRL(x.valor)+'</td>'+
-      '<td class="l" colspan="7">— cidade fora da cobertura —</td><td></td></tr>';
+      '<td class="l" colspan="7">— cidade fora da cobertura —</td><td></td><td></td></tr>';
   }
   const r=x.r;
+  const pct=x.pct||0, pcls=(pct<=METAPCT?'pgood':'pbad');
   return '<tr><td class="l">'+(idx+1)+'</td><td class="cli l" title="'+(x.cli||'')+'">'+(x.cli||'')+'</td>'+
     '<td class="cid l">'+x.cidade+'</td><td class="l"><span class="rg">'+x.regiao+'</span></td>'+
     '<td>'+NUM(r.peso)+(r.peso===0?' ⚠':'')+'</td><td>'+BRL(r.valor)+'</td>'+
     '<td><span class="tag '+(r.base==='Mínimo'?'min':'kg')+'">'+r.base+'</span></td>'+
     '<td class="cmp">'+BRL(r.fretePeso)+'</td><td class="comp cmp">'+BRL(r.gris)+'</td><td class="comp cmp">'+BRL(r.adval)+'</td>'+
     '<td class="comp cmp">'+BRL(r.pedagio)+'</td><td class="comp cmp">'+BRL(r.cte)+'</td><td class="comp cmp">'+BRL(r.despacho)+'</td>'+
-    '<td class="tot">'+BRL(r.total)+'</td></tr>';
+    '<td class="tot">'+BRL(r.total)+'</td>'+
+    '<td class="'+pcls+'">'+(r.valor>0?NUM(pct)+'%':'—')+'</td></tr>';
 }
 
 function render(data,origem){
@@ -905,7 +922,8 @@ function render(data,origem){
     }else{
       n++;nP+=r.peso;nV+=r.valor;nF+=r.total; if(r.peso===0)zeroW++;
       LAST.push({idx,ped:d.ped,cli:d.cli,cidade:r.cidade,regiao:r.regiao,peso:r.peso,valor:r.valor,
-        total:r.total,fretePeso:r.fretePeso,gris:r.gris,adval:r.adval,pedagio:r.pedagio,cte:r.cte,despacho:r.despacho,r});
+        total:r.total,fretePeso:r.fretePeso,gris:r.gris,adval:r.adval,pedagio:r.pedagio,cte:r.cte,despacho:r.despacho,
+        pct:(r.valor>0?r.total/r.valor*100:0),r});
     }
   });
   // KPIs (sempre sobre o conjunto completo)
@@ -919,7 +937,8 @@ function render(data,origem){
   document.getElementById('sPeso').textContent=NUM(nP)+' kg';
   document.getElementById('sValor').textContent=BRL(nV);
   document.getElementById('sMedio').textContent=n?BRL(nF/n):'—';
-  document.getElementById('sPct').textContent=nV?((nF/nV*100).toFixed(1).replace('.',',')+'% do valor NF'):'';
+  { let above=0; LAST.forEach(x=>{ if(x.r && x.pct>METAPCT) above++; });
+    document.getElementById('sPct').innerHTML = nV?('<b>'+NUM(nF/nV*100)+'%</b> médio da NF · '+above+' acima de '+NUM(METAPCT)+'%'):''; }
   document.getElementById('sFrete').textContent=BRL(nF);
   // avisos
   let w='';const nf=Object.keys(notFound);
@@ -947,7 +966,8 @@ function mcardHTML(x){
       '<div class="mc-sub">'+(x.cidade||'')+' &nbsp;<span class="tag err">não atendida</span></div></div>';
   }
   const r=x.r;
-  return '<div class="mcard"><div class="mc-top"><div class="mc-cli">'+(x.cli||'(sem nome)')+'</div><div class="mc-tot">'+BRL(r.total)+'</div></div>'+
+  const pct=x.pct||0, pcls=(pct<=METAPCT?'pgood':'pbad');
+  return '<div class="mcard"><div class="mc-top"><div class="mc-cli">'+(x.cli||'(sem nome)')+'</div><div class="mc-tot">'+BRL(r.total)+' <span class="'+pcls+'" style="font-size:.78rem">('+(r.valor>0?NUM(pct)+'%':'—')+')</span></div></div>'+
     '<div class="mc-sub">'+x.cidade+' &nbsp;<span class="rg">'+r.regiao+'</span> &nbsp;<span class="tag '+(r.base==='Mínimo'?'min':'kg')+'">'+r.base+'</span></div>'+
     '<div class="mc-grid"><span><i>Peso</i>'+NUM(r.peso)+(r.peso===0?' ⚠':' kg')+'</span><span><i>Valor NF</i>'+BRL(r.valor)+'</span><span><i>Frete peso</i>'+BRL(r.fretePeso)+'</span></div></div>';
 }
@@ -973,9 +993,10 @@ function applyView(){
   const filtered=(q||rf);
   // desktop: tabela
   const tbody=document.getElementById('tbody');
-  tbody.innerHTML = rows.length ? rows.map(rowHTML).join('') : '<tr><td colspan="14" class="norows">Nenhuma carga encontrada com esse filtro.</td></tr>';
+  tbody.innerHTML = rows.length ? rows.map(rowHTML).join('') : '<tr><td colspan="15" class="norows">Nenhuma carga encontrada com esse filtro.</td></tr>';
   document.getElementById('tfoot').innerHTML='<tr><td colspan="4" class="l">'+(filtered?'SUBTOTAL FILTRADO':'TOTAL')+' · '+vn+' cargas</td>'+
-    '<td>'+NUM(vP)+'</td><td>'+BRL(vV)+'</td><td colspan="6"></td><td></td><td class="grand">'+BRL(vF)+'</td></tr>';
+    '<td>'+NUM(vP)+'</td><td>'+BRL(vV)+'</td><td colspan="6"></td><td></td><td class="grand">'+BRL(vF)+'</td>'+
+    '<td class="grand '+(vV&&(vF/vV*100)<=METAPCT?'pgood':'pbad')+'">'+(vV?NUM(vF/vV*100)+'%':'—')+'</td></tr>';
   // mobile: cards + total
   document.getElementById('mcards').innerHTML = rows.length ? rows.map(mcardHTML).join('') : '<div class="norows">Nenhuma carga encontrada com esse filtro.</div>';
   document.getElementById('mTotal').innerHTML = '<span>'+(filtered?'Subtotal filtrado':'Total')+' · '+vn+' cargas</span><b>'+BRL(vF)+'</b>';
@@ -1002,11 +1023,11 @@ document.querySelectorAll('thead tr.cols-h th[data-sort]').forEach(th=>{
 
 document.getElementById('exp').onclick=()=>{
   if(!LAST.length)return;
-  const head=['Pedido','Cliente','Cidade','Regiao','Peso_kg','Valor_NF','Frete_Peso','GRIS','Ad_Valorem','Pedagio','Taxa_CTe','Despacho','ICMS','Frete_Total'];
+  const head=['Pedido','Cliente','Cidade','Regiao','Peso_kg','Valor_NF','Frete_Peso','GRIS','Ad_Valorem','Pedagio','Taxa_CTe','Despacho','ICMS','Frete_Total','Pct_NF'];
   const lines=[head.join(';')];
   LAST.forEach(x=>{const r=x.r;
-    const c=r?[x.ped,x.cli,x.cidade,x.regiao,x.peso,x.valor,r.fretePeso,r.gris,r.adval,r.pedagio,r.cte,r.despacho,r.icms,r.total]
-             :[x.ped,x.cli,x.cidade,'NAO ATENDIDA',x.peso,x.valor,'','','','','','','',''];
+    const c=r?[x.ped,x.cli,x.cidade,x.regiao,x.peso,x.valor,r.fretePeso,r.gris,r.adval,r.pedagio,r.cte,r.despacho,r.icms,r.total,(x.pct||0)]
+             :[x.ped,x.cli,x.cidade,'NAO ATENDIDA',x.peso,x.valor,'','','','','','','','',''];
     lines.push(c.map(v=>typeof v==='number'?String(v).replace('.',','):('"'+String(v==null?'':v).replace(/"/g,'""')+'"')).join(';'));});
   const blob=new Blob(['\ufeff'+lines.join('\n')],{type:'text/csv;charset=utf-8'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='frete_calculado.csv';a.click();
@@ -1157,9 +1178,10 @@ function renderRisso(){
   const rows=LAST.map(x=>{
     const r=calcRisso(x.cidade,x.peso,x.valor);
     if(r.ok){ n++; nP+=toNum(x.peso); nV+=toNum(x.valor); nF+=r.total; cid.add(rkey(x.cidade));
-      return '<tr><td>'+(x.idx+1)+'</td><td class="l">'+esc(x.cli||'-')+'</td><td class="l">'+esc(x.cidade)+'</td><td>'+NUM(x.peso)+'</td><td>'+BRL(x.valor)+'</td><td>'+BRL(r.secat)+'</td><td class="b">'+BRL(r.total)+'</td></tr>';
+      const pc=toNum(x.valor)>0?r.total/toNum(x.valor)*100:0;
+      return '<tr><td>'+(x.idx+1)+'</td><td class="l">'+esc(x.cli||'-')+'</td><td class="l">'+esc(x.cidade)+'</td><td>'+NUM(x.peso)+'</td><td>'+BRL(x.valor)+'</td><td>'+BRL(r.secat)+'</td><td class="b">'+BRL(r.total)+'</td><td class="'+(pc<=METAPCT?'pgood':'pbad')+'">'+(toNum(x.valor)>0?NUM(pc)+'%':'—')+'</td></tr>';
     } else { miss++; nf.push(x.cidade);
-      return '<tr class="bad"><td>'+(x.idx+1)+'</td><td class="l">'+esc(x.cli||'-')+'</td><td class="l">'+esc(x.cidade)+'</td><td class="l" colspan="4">Risso não atende esta cidade</td></tr>';
+      return '<tr class="bad"><td>'+(x.idx+1)+'</td><td class="l">'+esc(x.cli||'-')+'</td><td class="l">'+esc(x.cidade)+'</td><td class="l" colspan="5">Risso não atende esta cidade</td></tr>';
     }
   }).join('');
   CMP.risso=nF; CMP.rissoServ=n; CMP.rissoMiss=miss;
@@ -1173,9 +1195,9 @@ function renderRisso(){
   '</div>';
   const warn=nf.length?'<div class="rep-warn" style="margin:10px 0">Risso não atende '+nf.length+' cidade(s): '+nf.map(esc).join(' · ')+'</div>':'';
   const tbl='<div class="tablewrap" style="margin-top:12px"><table class="risso-tbl"><thead><tr>'+
-    '<th class="l">#</th><th class="l">Cliente</th><th class="l">Cidade</th><th>Peso</th><th>Valor NF</th><th>SECAT</th><th>Frete Risso</th>'+
+    '<th class="l">#</th><th class="l">Cliente</th><th class="l">Cidade</th><th>Peso</th><th>Valor NF</th><th>SECAT</th><th>Frete Risso</th><th>% NF</th>'+
     '</tr></thead><tbody>'+rows+'</tbody>'+
-    '<tfoot><tr><td colspan="3" class="l">TOTAL — '+n+' carga(s)</td><td>'+NUM(nP)+' kg</td><td>'+BRL(nV)+'</td><td></td><td class="b">'+BRL(nF)+'</td></tr></tfoot></table></div>';
+    '<tfoot><tr><td colspan="3" class="l">TOTAL — '+n+' carga(s)</td><td>'+NUM(nP)+' kg</td><td>'+BRL(nV)+'</td><td></td><td class="b">'+BRL(nF)+'</td><td class="'+(nV&&(nF/nV*100)<=METAPCT?'pgood':'pbad')+'">'+(nV?NUM(nF/nV*100)+'%':'—')+'</td></tr></tfoot></table></div>';
   const note='<p class="hint" style="margin-top:10px">Regra Risso: R$ 0,65/kg + GRIS 0,20% + Seguro 0,30% + Pedágio R$ 8/100kg + Despacho R$ 32 + SECAT da cidade, com ICMS 12% por dentro.</p>';
   el.innerHTML=kpis+warn+tbl+note;
   renderCompare();
@@ -1234,9 +1256,10 @@ function renderSim(){
     '<tfoot><tr><td colspan="2" class="l">TOTAL — '+SIMORD.length+' pedido(s)</td><td>'+NUM(peso)+' kg</td><td>'+BRL(valor)+'</td><td class="b">'+BRL(infT)+'</td><td class="b2">'+BRL(risT)+'</td><td></td></tr></tfoot></table></div>';
   const opts=[['Infinity (tabela)',infT],['Risso',risT],['Veículo próprio',pr.total]];
   const minv=Math.min(...opts.map(o=>o[1]));
+  const pctTxt2=v=> valor>0?' · '+NUM(v/valor*100)+'% da NF':'';
   const cards='<div class="cmp-grid" style="margin-top:14px">'+
-    '<div class="cmp-col'+(infT===minv?' win':'')+'"><div class="t">Infinity (tabela)</div><div class="v">'+BRL(infT)+'</div><div class="s">'+(infMiss?infMiss+' fora da área':'soma por carga')+'</div></div>'+
-    '<div class="cmp-col'+(risT===minv?' win':'')+'"><div class="t">Risso</div><div class="v">'+BRL(risT)+'</div><div class="s">'+(risMiss?risMiss+' fora da área':'R$ 0,65/kg + SECAT')+'</div></div>'+
+    '<div class="cmp-col'+(infT===minv?' win':'')+'"><div class="t">Infinity (tabela)</div><div class="v">'+BRL(infT)+'</div><div class="s">'+(infMiss?infMiss+' fora da área':'soma por carga')+pctTxt2(infT)+'</div></div>'+
+    '<div class="cmp-col'+(risT===minv?' win':'')+'"><div class="t">Risso</div><div class="v">'+BRL(risT)+'</div><div class="s">'+(risMiss?risMiss+' fora da área':'R$ 0,65/kg + SECAT')+pctTxt2(risT)+'</div></div>'+
     '<div class="cmp-col'+(pr.total===minv?' win':'')+'"><div class="t">Veículo próprio</div><div class="v">'+BRL(pr.total)+'</div><div class="s">'+NUM(pr.km)+' km · '+NUM(pr.mot)+' mot · '+NUM(pr.dia)+' diárias</div></div>'+
   '</div>';
   const winner=opts.filter(o=>o[1]===minv)[0][0];
@@ -1284,6 +1307,34 @@ function printSim(){
 }
 document.getElementById('btnPrintRisso').onclick=printRisso;
 document.getElementById('btnPrintSim').onclick=printSim;
+
+/* ===================== CALCULADORA DE PEDIDO MÍNIMO (meta % da NF) ===================== */
+function renderMinPedido(){
+  const el=document.getElementById('mpBody'); if(!el) return;
+  const meta=gv('mpMeta'), peso=gv('mpPeso');
+  const m=meta/100, valFee=FEE.gris+FEE.adval, denom=(1-FEE.icms)*m - valFee;
+  let rows='';
+  REG_ORDER.forEach(rg=>{ const t=TABELA[rg]; if(!t) return;
+    const fretePeso=Math.max(peso*t.rate,t.min), pedagio=Math.ceil(peso/100)*FEE.pedagio, fixo=FEE.cte+FEE.despacho;
+    const W=fretePeso+pedagio+fixo;
+    let cell,rkgcell;
+    if(denom<=0){ cell='<td class="bad2">meta baixa demais</td>'; rkgcell='<td class="bad2">—</td>'; }
+    else { const minVal=W/denom, rkg=peso>0?minVal/peso:0;
+      cell='<td class="b">'+BRL(minVal)+'</td>'; rkgcell='<td>R$ '+NUM(rkg)+'</td>'; }
+    rows+='<tr><td class="l">'+rg+'</td><td>R$ '+NUM(t.rate)+'/kg</td><td>'+BRL(t.min)+'</td>'+cell+rkgcell+'</tr>';
+  });
+  el.innerHTML='<div class="tablewrap"><table class="risso-tbl"><thead><tr><th class="l">Região</th><th>Tarifa</th><th>Frete mín.</th><th>Valor mín. da NF</th><th>R$/kg necessário</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
+    '<p class="hint" style="margin-top:9px">Para <b>'+NUM(peso)+' kg</b> com meta de <b>'+NUM(meta)+'%</b>: pedidos com NF <b>acima</b> do valor mostrado mantêm o frete da Infinity dentro da meta; abaixo disso o frete passa de '+NUM(meta)+'% da nota.</p>';
+}
+function refreshMeta(){
+  METAPCT=gv('mpMeta')||10;
+  if(LAST.length){ let above=0,nF=0,nV=0; LAST.forEach(x=>{ if(x.r){nF+=x.total;nV+=x.valor; if(x.pct>METAPCT) above++;} });
+    document.getElementById('sPct').innerHTML = nV?('<b>'+NUM(nF/nV*100)+'%</b> médio da NF · '+above+' acima de '+NUM(METAPCT)+'%'):'';
+    applyView(); }
+}
+document.getElementById('mpMeta').addEventListener('input',()=>{ refreshMeta(); renderMinPedido(); });
+document.getElementById('mpPeso').addEventListener('input',renderMinPedido);
+renderMinPedido();
 
 
 
