@@ -1154,10 +1154,12 @@ function renderCompare(){
   const tOn=(document.getElementById('taxOn')||{}).checked, icms=gv('taxIcms'), pc=gv('taxPc');
   const netLine=total=>{ if(!tOn) return ''; const rate=icms+pc, cr=total*rate/100, net=total-cr;
     return '<div class="cmp-net">crédito de imposto <span class="cr">'+BRL(cr)+'</span> ('+NUM(rate)+'%)<br>frete líquido <span class="liq">'+BRL(net)+'</span></div>'; };
+  const _vals=[frete,prop]; if(risso!=null) _vals.push(risso); const _min=Math.min(..._vals);
+  const _w=v=>v===_min?' win':'';
   let cols='<div class="cmp-grid">'+
-    '<div class="cmp-col feat"><div class="t">Transportadora Infinity</div><div class="v">'+BRL(frete)+'</div><div class="s">preço cobrado do cliente</div>'+netLine(frete)+'</div>'+
-    '<div class="cmp-col"><div class="t">Veículo próprio</div><div class="v">'+BRL(prop)+'</div><div class="s">'+badge(prop)+'</div></div>';
-  if(risso!=null) cols+='<div class="cmp-col"><div class="t">Risso</div><div class="v">'+BRL(risso)+'</div><div class="s">'+badge(risso)+(CMP.rissoMiss?'<div style="margin-top:4px;color:var(--amber);font-size:.66rem">'+CMP.rissoMiss+' cidade(s) fora da área</div>':'')+'</div>'+netLine(risso)+'</div>';
+    '<div class="cmp-col'+_w(frete)+'"><div class="t">Transportadora Infinity</div><div class="v">'+BRL(frete)+'</div><div class="s">preço cobrado do cliente</div>'+netLine(frete)+'</div>'+
+    '<div class="cmp-col'+_w(prop)+'"><div class="t">Veículo próprio</div><div class="v">'+BRL(prop)+'</div><div class="s">'+badge(prop)+'</div></div>';
+  if(risso!=null) cols+='<div class="cmp-col'+_w(risso)+'"><div class="t">Risso</div><div class="v">'+BRL(risso)+'</div><div class="s">'+badge(risso)+(CMP.rissoMiss?'<div style="margin-top:4px;color:var(--amber);font-size:.66rem">'+CMP.rissoMiss+' cidade(s) fora da área</div>':'')+'</div>'+netLine(risso)+'</div>';
   cols+='</div>';
   if(tOn) cols+='<p class="hint" style="margin-top:9px;font-size:.72rem">Crédito = ICMS '+NUM(icms)+'%'+(pc>0?' + PIS/COFINS '+NUM(pc)+'%':'')+' embutido no frete. Só aproveita quem é <b>contribuinte no regime normal</b> (Simples Nacional não credita ICMS; PIS/COFINS só no Lucro Real). Confirme as hipóteses com a contabilidade.</p>';
   const dp=vsTab(prop), cheaperP=prop<=frete;
