@@ -44,6 +44,14 @@ body{background-image:linear-gradient(180deg,#e7edf4 0%,#eaeff5 240px);min-heigh
 .maptools{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:0 0 12px}
 .origin-pin{font-size:23px;line-height:1;filter:drop-shadow(0 1px 2px rgba(0,0,0,.5))}
 .leaflet-popup-content{font-family:'Mulish',sans-serif;font-size:.8rem}
+.poptitle{font-weight:800;color:var(--navy);font-size:.92rem;margin-bottom:2px}
+.popsub{color:var(--muted);font-size:.72rem;margin-bottom:2px}
+.poplist{margin-top:7px;border-top:1px solid var(--line);padding-top:6px;max-height:150px;overflow:auto}
+.poprow{display:flex;align-items:center;gap:7px;padding:3px 0;border-bottom:1px solid var(--line2);font-size:.74rem}
+.poprow:last-child{border-bottom:none}
+.poprow .pn{font-weight:800;color:var(--blue-d);min-width:34px}
+.poprow .pc{flex:1;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.poprow .pv{font-weight:700;color:var(--navy);font-variant-numeric:tabular-nums}
 .logo{display:flex;align-items:center;gap:13px;z-index:1}
 .inf{font-family:'Mulish',sans-serif;font-weight:800;font-size:1.55rem;color:var(--blue);line-height:1;letter-spacing:-.02em}
 .logo .txt{font-family:'Mulish',sans-serif;font-weight:700;font-size:1.18rem;letter-spacing:-.01em;line-height:1.05}
@@ -268,6 +276,7 @@ td.pbad,.pbad{color:#d6232a;font-weight:700}
 .cmp-net{margin-top:6px;padding-top:6px;border-top:1px dashed var(--line);font-size:.7rem;color:var(--muted);line-height:1.55}
 .cmp-net .liq{color:var(--green);font-weight:800}
 .cmp-net .cr{color:var(--blue-d);font-weight:700}
+.cmp-partial{margin-top:5px;font-size:.66rem;font-weight:700;color:var(--amber);background:var(--amber-bg);border:1px solid #f0d9a8;border-radius:6px;padding:3px 7px;line-height:1.35}
 .topbar,.tab,.tab.active,.btn,.kpi.feat,.cmp-col.feat,.rcard.feat,.section-label,.logo .inf{transition:background-color .45s ease,border-color .45s ease,color .45s ease}
 body.theme-risso{
   --navy:#13408c; --navy2:#1a52b0; --blue:#e1242b; --blue-d:#bb1d23;
@@ -1177,21 +1186,22 @@ function renderCompare(){
   const tOn=(document.getElementById('taxOn')||{}).checked, icms=gv('taxIcms'), pc=gv('taxPc');
   const netLine=total=>{ if(!tOn) return ''; const rate=icms+pc, cr=total*rate/100, net=total-cr;
     return '<div class="cmp-net">crédito de imposto <span class="cr">'+BRL(cr)+'</span> ('+NUM(rate)+'%)<br>frete líquido <span class="liq">'+BRL(net)+'</span></div>'; };
-  const _vals=[frete,prop]; if(risso!=null) _vals.push(risso); const _min=Math.min(..._vals);
+  const rissoFull = (risso!=null && !CMP.rissoMiss);   // Risso só concorre se cobre TODAS as cidades
+  const _vals=[frete,prop]; if(rissoFull) _vals.push(risso); const _min=Math.min(..._vals);
   const _w=v=>v===_min?' win':'';
   let cols='<div class="cmp-grid">'+
     '<div class="cmp-col'+_w(frete)+'"><img class="cmplogo" src="'+LOGO_INF+'" alt="Infinity"><div class="t">Transportadora Infinity</div><div class="v">'+BRL(frete)+'</div><div class="s">preço cobrado do cliente</div>'+netLine(frete)+'</div>'+
     '<div class="cmp-col'+_w(prop)+'"><img class="cmplogo" src="'+LOGO_CUSTO+'" alt="Próprio"><div class="t">Veículo próprio</div><div class="v">'+BRL(prop)+'</div><div class="s">'+badge(prop)+'</div></div>';
-  if(risso!=null) cols+='<div class="cmp-col'+_w(risso)+'"><img class="cmplogo" src="'+LOGO_RIS+'" alt="Risso"><div class="t">Risso</div><div class="v">'+BRL(risso)+'</div><div class="s">'+badge(risso)+(CMP.rissoMiss?'<div style="margin-top:4px;color:var(--amber);font-size:.66rem">'+CMP.rissoMiss+' cidade(s) fora da área</div>':'')+'</div>'+netLine(risso)+'</div>';
+  if(risso!=null) cols+='<div class="cmp-col'+(rissoFull?_w(risso):'')+'"><img class="cmplogo" src="'+LOGO_RIS+'" alt="Risso"><div class="t">Risso</div><div class="v">'+BRL(risso)+'</div><div class="s">'+badge(risso)+(CMP.rissoMiss?'<div class="cmp-partial">cobertura parcial · '+CMP.rissoMiss+' cidade(s) fora — valor não comparável direto</div>':'')+'</div>'+netLine(risso)+'</div>';
   cols+='</div>';
   if(tOn) cols+='<p class="hint" style="margin-top:9px;font-size:.72rem">Crédito = ICMS '+NUM(icms)+'%'+(pc>0?' + PIS/COFINS '+NUM(pc)+'%':'')+' embutido no frete. Só aproveita quem é <b>contribuinte no regime normal</b> (Simples Nacional não credita ICMS; PIS/COFINS só no Lucro Real). Confirme as hipóteses com a contabilidade.</p>';
   const dp=vsTab(prop), cheaperP=prop<=frete;
   const head='Veículo próprio é <b>'+NUM(Math.abs(dp))+'% '+(cheaperP?'mais barato':'mais caro')+'</b> que a tabela'+
     (cheaperP?(' — margem de '+BRL(frete-prop)+'.'):(' — '+BRL(prop-frete)+' acima do preço.'));
   // estratégia (oculta): ranqueia as opções de custo
-  const opts=[['veículo próprio',prop]]; if(risso!=null) opts.push(['Risso',risso]); opts.push(['tabela Infinity',frete]);
+  const opts=[['veículo próprio',prop]]; if(rissoFull) opts.push(['Risso',risso]); opts.push(['tabela Infinity',frete]);
   opts.sort((a,b)=>a[1]-b[1]); const best=opts[0];
-  let s='<p><b>Menor custo nesta carga:</b> '+best[0]+' ('+BRL(best[1])+').</p>';
+  let s='<p><b>Menor custo nesta carga'+(rissoFull?'':' (cobertura total)')+':</b> '+best[0]+' ('+BRL(best[1])+').</p>';
   s+= cheaperP
     ? '<p>Veículo próprio sai <b>'+BRL(frete-prop)+'</b> abaixo do preço de tabela ('+NUM((frete-prop)/frete*100)+'% de margem se cobrar a tabela e rodar interno).</p>'
     : '<p>⚠ Veículo próprio está <b>'+BRL(prop-frete)+'</b> acima do preço de tabela — prejuízo se cobrar a tabela e rodar interno. Reveja preço/custos.</p>';
@@ -1397,8 +1407,9 @@ const ORIGIN_CEP='09370-840', ORIGIN_FALLBACK={lat:-23.6677,lon:-46.4613}, ORIGI
 function buildMapData(){
   const agg={};
   LAST.forEach(x=>{ const k=rkey(x.cidade);
-    if(!agg[k]) agg[k]={cidade:x.cidade, regiao:(x.r?x.regiao:'fora da área'), n:0, peso:0, frete:0, coord:COORDS[k]||null};
-    const a=agg[k]; a.n++; a.peso+=toNum(x.peso); if(x.r) a.frete+=x.total; });
+    if(!agg[k]) agg[k]={cidade:x.cidade, regiao:(x.r?x.regiao:'fora da área'), n:0, peso:0, valor:0, frete:0, coord:COORDS[k]||null, orders:[]};
+    const a=agg[k]; a.n++; a.peso+=toNum(x.peso); a.valor+=toNum(x.valor); if(x.r) a.frete+=x.total;
+    a.orders.push({ped:x.ped, cli:x.cli, valor:toNum(x.valor)}); });
   const items=Object.values(agg);
   MAPDATA=items.filter(i=>i.coord).sort((a,b)=>b.n-a.n);
   MAPMISS=items.filter(i=>!i.coord);
@@ -1421,7 +1432,12 @@ function drawMap(){
     const D=Math.round(20+34*Math.sqrt(d.n/maxN)), fs=Math.max(11, Math.round(D*0.4));
     const icon=L.divIcon({className:'cpin-wrap', html:'<div class="cpin" style="width:'+D+'px;height:'+D+'px;line-height:'+(D-4)+'px;font-size:'+fs+'px">'+d.n+'</div>', iconSize:[D,D], iconAnchor:[D/2,D/2]});
     const m=L.marker([d.coord[0], d.coord[1]],{icon, title:d.cidade+' — '+d.n+' entrega(s)'})
-      .bindPopup('<b>'+esc(d.cidade)+'</b><br>'+d.n+' entrega(s) · '+d.regiao+'<br>Peso: '+NUM(d.peso)+' kg'+(d.frete?'<br>Frete Infinity: '+BRL(d.frete):''));
+      .bindPopup(
+        '<div class="poptitle">'+esc(d.cidade)+'</div>'+
+        '<div class="popsub">'+d.n+' entrega(s) · '+d.regiao+'</div>'+
+        '<div class="popsub">Peso: '+NUM(d.peso)+' kg · Valor NF: '+BRL(d.valor)+(d.frete?' · Frete: '+BRL(d.frete):'')+'</div>'+
+        '<div class="poplist">'+d.orders.map(o=>'<div class="poprow"><span class="pn">#'+esc(o.ped!=null?o.ped:'-')+'</span><span class="pc">'+esc(o.cli||'(sem nome)')+'</span><span class="pv">'+BRL(o.valor)+'</span></div>').join('')+'</div>'
+      , {maxWidth:300});
     LMARKERS.addLayer(m); pts.push([d.coord[0], d.coord[1]]);
   });
   if(pts.length){ try{ LMAP.fitBounds(pts,{padding:[34,34],maxZoom:11}); }catch(e){} }
