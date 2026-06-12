@@ -43,6 +43,23 @@ body{background-image:linear-gradient(180deg,#e7edf4 0%,#eaeff5 240px);min-heigh
 .cpin-wrap{background:none;border:none}
 .maptools{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:0 0 12px}
 .origin-pin{font-size:23px;line-height:1;filter:drop-shadow(0 1px 2px rgba(0,0,0,.5))}
+.kpis3{grid-template-columns:repeat(3,1fr)}
+.quickstart{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:14px}
+.quickstart span{text-transform:uppercase;letter-spacing:.12em;font-size:.66rem;color:var(--faint);font-weight:800}
+.tablock{display:none}
+body.nofile .tabpane.needfile.active>*{display:none!important}
+body.nofile .tabpane.needfile.active>.tablock{display:flex!important}
+.tablock{flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;padding:60px 24px;background:var(--surface);border:1.5px dashed var(--line);border-radius:14px;box-shadow:var(--shadow);min-height:240px}
+.tablock .tl-ic{font-size:2.6rem;opacity:.85}
+.tablock .tl-tx{font-size:1.02rem;font-weight:800;color:var(--navy2);max-width:380px;line-height:1.4}
+.dir-inputs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin-top:8px}
+.dir-inputs input[type=range]{width:100%;accent-color:var(--blue);margin-top:4px}
+.dir-inputs #dPesoV{display:inline-block;margin-top:4px;font-weight:800;color:var(--blue-d)}
+.dir-verdict{padding:13px 15px;border-radius:9px;font-size:.92rem;line-height:1.5}
+.dir-verdict.ok{background:var(--green-bg);color:#2f7d3a;border:1px solid #bfe3c0}
+.dir-verdict.bad{background:var(--red-bg);color:var(--red);border:1px solid #f0c5c5}
+.dir-rec{margin-top:14px;padding:13px 15px;background:var(--blue-tint);border:1px solid var(--blue-soft);border-radius:9px;font-size:.8rem;line-height:1.7;color:var(--ink)}
+@media(max-width:720px){.dir-inputs{grid-template-columns:1fr}.kpis3{grid-template-columns:1fr}}
 .leaflet-popup-content{font-family:'Mulish',sans-serif;font-size:.8rem}
 .poptitle{font-weight:800;color:var(--navy);font-size:.92rem;margin-bottom:2px}
 .popsub{color:var(--muted);font-size:.72rem;margin-bottom:2px}
@@ -500,7 +517,7 @@ table.rep-tbl tfoot td{border-top:2px solid var(--navy);font-weight:700;backgrou
 .foot .v{display:inline-block;margin-top:6px;font-family:'Mulish';color:var(--green);font-size:.72rem}
 </style>
 </head>
-<body class="prefile">
+<body class="prefile nofile">
 <div id="scrim"></div>
 
 <div class="topbar">
@@ -546,6 +563,7 @@ table.rep-tbl tfoot td{border-top:2px solid var(--navy);font-weight:700;backgrou
     <input type="file" id="file" accept=".xlsx,.xls,.csv">
 </label>
 <div class="status" id="srcStatus"></div>
+<div class="quickstart"><span>ou</span><button class="btn ghost sm" id="goSim">🧮 Usar a calculadora rápida sem planilha</button></div>
 </div><!-- /uploadZone -->
 
 <!-- NAV DAS ABAS -->
@@ -555,10 +573,12 @@ table.rep-tbl tfoot td{border-top:2px solid var(--navy);font-weight:700;backgrou
   <button class="tab" data-tab="risso"><span class="ti">🚛</span> Risso (terceiro)</button>
   <button class="tab" data-tab="cotacao"><span class="ti">🧮</span> Cotação rápida</button>
   <button class="tab" data-tab="mapa"><span class="ti">🗺️</span> Mapa de entregas</button>
+  <button class="tab" data-tab="dir"><span class="ti">📊</span> Diretoria</button>
 </div>
 
 <!-- ================= ABA 1: FRETE ================= -->
-<div class="tabpane active" id="tab-frete">
+<div class="tabpane needfile active" id="tab-frete">
+<div class="tablock"><div class="tl-ic">🔒</div><div class="tl-tx">Suba o arquivo da Grid fox log para obter os cálculos</div><button class="btn sm tl-btn">Subir arquivo</button></div>
 <div class="section-label">Comparativo de modais</div>
 <div class="cardwrap-single" style="max-width:none">
   <div class="card collapsible-card collapsed" id="cardCotacao" style="display:none">
@@ -673,7 +693,8 @@ table.rep-tbl tfoot td{border-top:2px solid var(--navy);font-weight:700;backgrou
 </div><!-- /tab-frete -->
 
 <!-- ================= ABA 2: CUSTO PROPRIO ================= -->
-<div class="tabpane" id="tab-custo">
+<div class="tabpane needfile" id="tab-custo">
+<div class="tablock"><div class="tl-ic">🔒</div><div class="tl-tx">Suba o arquivo da Grid fox log para obter os cálculos</div><button class="btn sm tl-btn">Subir arquivo</button></div>
 
 <div class="section-label">Dados puxados da Grid fox log</div>
 <div class="kpis kpis5">
@@ -744,7 +765,8 @@ table.rep-tbl tfoot td{border-top:2px solid var(--navy);font-weight:700;backgrou
 </div><!-- /tab-custo -->
 
 <!-- ================= ABA 3: RISSO ================= -->
-<div class="tabpane" id="tab-risso">
+<div class="tabpane needfile" id="tab-risso">
+<div class="tablock"><div class="tl-ic">🔒</div><div class="tl-tx">Suba o arquivo da Grid fox log para obter os cálculos</div><button class="btn sm tl-btn">Subir arquivo</button></div>
   <div class="section-label">Risso Transportes · frete por carga (terceiro)</div>
   <div id="rissoBody"><p class="hint">Suba o arquivo da Grid fox log para calcular o frete pela Risso. A Risso cobra R$ 0,65/kg + coleta/entrega (SECAT) por cidade — e atende apenas as cidades da lista dela.</p></div>
   <div style="margin-top:14px"><button class="btn ghost sm" id="btnPrintRisso">🖨 Romaneio / PDF Risso</button></div>
@@ -796,12 +818,27 @@ table.rep-tbl tfoot td{border-top:2px solid var(--navy);font-weight:700;backgrou
 </div>
 
 <!-- ================= ABA 5: MAPA DE ENTREGAS ================= -->
-<div class="tabpane" id="tab-mapa">
+<div class="tabpane needfile" id="tab-mapa">
+<div class="tablock"><div class="tl-ic">🔒</div><div class="tl-tx">Suba o arquivo da Grid fox log para obter os cálculos</div><button class="btn sm tl-btn">Subir arquivo</button></div>
   <div class="section-label">Mapa de entregas · cidades cotadas</div>
   <p class="hint" id="mapHint">Suba o arquivo da Grid fox log para ver as entregas no mapa. O mapa usa OpenStreetMap (precisa de internet) — abra o arquivo direto no navegador.</p>
   <div class="maptools"><button class="btn sm" id="btnRoute">🚚 Traçar rota (saída e retorno em Mauá)</button><span class="kmnote" id="routeNote"></span></div>
   <div id="leafmap" style="display:none"></div>
   <div id="mapSummary" style="margin-top:12px"></div>
+</div>
+
+<!-- ================= ABA 6: DIRETORIA (cenário fracionado · removível) ================= -->
+<div class="tabpane" id="tab-dir">
+  <div class="section-label">Diretoria · cenário de entrega fracionada (hipotético)</div>
+  <div class="card">
+    <p class="hint">Simulação para a diretoria: quanto o frete custaria se cada pedido fosse enviado <b>fracionado</b> (pago por pedido, na tabela da transportadora), em vez de acumular ~R$ 50–60 mil para uma <b>coleta única</b>. Ajuste o <b>peso</b> e o <b>valor médio</b> do pedido e veja o impacto na margem em cada região.</p>
+    <div class="dir-inputs">
+      <div class="fld"><label>Peso médio do pedido</label><input id="dPeso" type="range" min="0" max="350" step="5" value="200"><span id="dPesoV">200 kg</span></div>
+      <div class="fld"><label>Valor médio do pedido (R$)</label><input id="dValor" type="number" value="600" step="50" min="0"></div>
+      <div class="fld"><label>Meta de frete (% do pedido)</label><input id="dMeta" type="number" value="10" step="0.5" min="1"></div>
+    </div>
+  </div>
+  <div id="dirBody" style="margin-top:4px"></div>
 </div>
 
 <div class="foot">
@@ -929,6 +966,7 @@ fileInput.addEventListener('change',e=>{if(e.target.files.length)handleFile(e.ta
 function handleFile(f){const rd=new FileReader();
   rd.onload=e=>{try{const {data,sheet}=parseWorkbook(XLSX.read(e.target.result,{type:'array'}));
     document.body.classList.remove('prefile');
+    document.body.classList.remove('nofile');
     render(data,f.name);setStatus('ok','✓ '+data.length+' linha(s) lida(s) do arquivo "'+f.name+'"');}
     catch(err){setStatus('err','✕ '+err.message);alert(err.message);}};
   rd.readAsArrayBuffer(f);}
@@ -1507,6 +1545,63 @@ async function routeOnMap(){
   }finally{ btn.disabled=false; }
 }
 (function(){ const b=document.getElementById('btnRoute'); if(b) b.onclick=routeOnMap; })();
+
+/* ===================== DIRETORIA · cenário fracionado (aba removível) ===================== */
+function freteReg(rg,peso,valor){ const t=TABELA[rg]; if(!t) return 0;
+  const fp=Math.max(peso*t.rate,t.min), gris=valor*FEE.gris, adval=valor*FEE.adval,
+        ped=Math.ceil(peso/100)*FEE.pedagio, fixo=FEE.cte+FEE.despacho;
+  return (fp+gris+adval+ped+fixo)/(1-FEE.icms); }
+function minValReg(rg,peso,m){ const t=TABELA[rg]; if(!t) return Infinity;
+  const fp=Math.max(peso*t.rate,t.min), ped=Math.ceil(peso/100)*FEE.pedagio, fixo=FEE.cte+FEE.despacho, W=fp+ped+fixo;
+  const den=(1-FEE.icms)*m-(FEE.gris+FEE.adval); return den>0? W/den : Infinity; }
+function renderDir(){
+  const el=document.getElementById('dirBody'); if(!el) return;
+  const peso=gv('dPeso'), valor=gv('dValor'), meta=gv('dMeta'), m=meta/100;
+  const pv=document.getElementById('dPesoV'); if(pv) pv.textContent=NUM(peso)+' kg';
+  const cpr={}; Object.values(CMAP).forEach(rg=>{cpr[rg]=(cpr[rg]||0)+1;});
+  let totFrete=0, totCities=0; const over=[];
+  const rows=REG_ORDER.filter(rg=>TABELA[rg]).map(rg=>{
+    const f=freteReg(rg,peso,valor), pct=valor>0?f/valor*100:0, marg=valor-f, margp=valor>0?marg/valor*100:0, nc=cpr[rg]||0;
+    totFrete+=f*nc; totCities+=nc; if(pct>meta) over.push(rg);
+    const mv=minValReg(rg,peso,m), cls=pct<=meta?'pgood':'pbad';
+    return '<tr><td class="l">'+rg+'</td><td>'+nc+'</td><td class="b">'+BRL(f)+'</td><td class="'+cls+'">'+NUM(pct)+'%</td><td>'+(marg<0?'<span style="color:var(--red)">−'+BRL(-marg).replace('R$ ','R$ ')+'</span>':BRL(marg))+'</td><td class="'+cls+'">'+NUM(margp)+'%</td><td>'+(isFinite(mv)?BRL(mv):'—')+'</td></tr>';
+  }).join('');
+  const totVal=totCities*valor, blend=totVal>0?totFrete/totVal*100:0, good=blend<=meta;
+  let worst=0,worstReg='',worstHalf=0;
+  REG_ORDER.forEach(rg=>{ if(TABELA[rg]){ const mv=minValReg(rg,peso,m); if(isFinite(mv)&&mv>worst){worst=mv;worstReg=rg;} const mh=minValReg(rg,peso,m/2); if(isFinite(mh)&&mh>worstHalf)worstHalf=mh; } });
+  const r50=x=>Math.ceil(x/50)*50;
+  const head='<div class="dir-verdict '+(good?'ok':'bad')+'">Com <b>'+NUM(peso)+' kg</b> e <b>'+BRL(valor)+'</b> por pedido, o frete fracionado fica em média <b>'+NUM(blend)+'% do pedido</b> — '+(good?'dentro da meta de '+NUM(meta)+'%. 👍':'acima da meta de '+NUM(meta)+'%. 👎 margem comprometida.')+'</div>';
+  const kpis='<div class="kpis kpis3" style="margin-top:12px">'+
+    '<div class="kpi"><div class="k">Pedidos (1 por cidade)</div><div class="v">'+totCities+'</div></div>'+
+    '<div class="kpi"><div class="k">Frete total se fracionado</div><div class="v mono">'+BRL(totFrete)+'</div></div>'+
+    '<div class="kpi feat"><div class="k">Frete sobre os pedidos</div><div class="v mono">'+NUM(blend)+'%</div></div>'+
+  '</div>';
+  const tbl='<div class="tablewrap" style="margin-top:14px"><table class="risso-tbl"><thead><tr><th class="l">Região</th><th>Cidades</th><th>Frete/pedido</th><th>% do pedido</th><th>Margem R$</th><th>Margem %</th><th>Valor mín. p/ '+NUM(meta)+'%</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+  const rec='<div class="dir-rec"><b>💡 Sugestão para o frete valer a pena:</b><br>'+
+    'Com <b>'+NUM(peso)+' kg</b>, para o frete ficar <b>≤ '+NUM(meta)+'%</b> em <b>todas</b> as regiões, o pedido precisa valer no mínimo <b>'+BRL(r50(worst))+'</b> (pior caso: '+worstReg+'). '+
+    (over.length?'Hoje, com '+BRL(valor)+', estoura a meta em: <b>'+over.join(', ')+'</b>.':'Com '+BRL(valor)+', já fica dentro da meta em todas as regiões. ✅')+'<br>'+
+    'Quer margem folgada (frete ≤ '+NUM(meta/2)+'%)? Pedido a partir de <b>'+BRL(r50(worstHalf))+'</b>.<br>'+
+    '<span style="color:var(--muted)">Dica: quanto <b>menor o peso</b>, menor o valor necessário — pedidos leves e de alto valor são os que mais compensam fracionar. Pedidos pesados e baratos só fecham na <b>coleta acumulada</b>.</span></div>';
+  el.innerHTML=head+kpis+tbl+rec;
+}
+['dPeso','dValor','dMeta'].forEach(id=>{ const e=document.getElementById(id); if(e) e.addEventListener('input',renderDir); });
+renderDir();
+
+/* atalho: ir direto pra calculadora rápida sem subir planilha */
+(function(){ const b=document.getElementById('goSim'); if(!b) return;
+  b.onclick=()=>{
+    document.body.classList.remove('prefile');
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.tabpane').forEach(x=>x.classList.remove('active'));
+    const tab=document.querySelector('.tab[data-tab="cotacao"]'); if(tab) tab.classList.add('active');
+    const pane=document.getElementById('tab-cotacao'); if(pane) pane.classList.add('active');
+    if(typeof applyTheme==='function') applyTheme('cotacao');
+    const sc=document.getElementById('sCidIn'); if(sc){ try{ sc.focus(); }catch(e){} }
+    try{ window.scrollTo({top:0,behavior:'smooth'}); }catch(e){}
+  };
+})();
+/* botões "Subir arquivo" dos bloqueios das abas */
+document.querySelectorAll('.tl-btn').forEach(b=>{ b.onclick=()=>{ const f=document.getElementById('file'); if(f) f.click(); }; });
 
 
 
